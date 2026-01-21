@@ -11,14 +11,14 @@ import (
 func ConnDB(cfg *config.Config) *sql.DB {
 	db, err := sql.Open("pgx", cfg.Database.DSN)
 	if err != nil {
-		log.Fatalf("failed to connect to PostgreSQL: %s", err.Error())
+		log.Fatalf("ошибка подключения к PostgreSQL: %s", err.Error())
 	}
 
 	if err = db.Ping(); err != nil {
-		log.Fatalf("failed to ping database: %s", err.Error())
+		log.Fatalf("ошибка пинга БД: %s", err.Error())
 	}
 
-	log.Println("Successfully connected to DB!")
+	log.Println("Успешное подключение к БД!")
 
 	return db
 }
