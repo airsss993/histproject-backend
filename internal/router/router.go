@@ -9,6 +9,12 @@ import (
 func New(basePath string) *gin.Engine {
 	r := gin.Default()
 
+	InitRoutes(r, basePath)
+
+	return r
+}
+
+func InitRoutes(r *gin.Engine, basePath string) {
 	// Публичные роуты
 	public := r.Group(basePath)
 	{
@@ -18,6 +24,4 @@ func New(basePath string) *gin.Engine {
 			})
 		})
 	}
-
-	return r
 }

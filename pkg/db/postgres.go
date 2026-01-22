@@ -4,12 +4,11 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/airsss993/histproject-backend/internal/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-func ConnDB(cfg *config.Config) *sql.DB {
-	db, err := sql.Open("pgx", cfg.Database.DSN)
+func ConnDB(dsn string) *sql.DB {
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
 		log.Fatalf("ошибка подключения к PostgreSQL: %s", err.Error())
 	}

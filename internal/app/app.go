@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,42 +10,38 @@ import (
 
 	"github.com/airsss993/histproject-backend/internal/config"
 	"github.com/airsss993/histproject-backend/internal/router"
+	"github.com/airsss993/histproject-backend/internal/server"
 	"github.com/airsss993/histproject-backend/pkg/db"
 )
 
 func Run() {
+	// Инициализируем конфиг приложения
 	cfg, err := config.Init()
 	if err != nil {
 		log.Fatal("Ошибка загрузки конфига: ", err)
 	}
-	_ = db.ConnDB(cfg)
 
+	// Создаем подключение к БД
+	_ = db.ConnDB(cfg.Database.DSN)
+
+	// Создаем роутер
 	r := router.New(cfg.Server.BasePath)
 
-	server := &http.Server{
-		Addr:    cfg.Server.Port,
-		Handler: r,
-	}
+	// Создаем сервер и запускаем его
+	srv := server.New(cfg.Server.Port, r)
+	srv.Start()
 
-	go func() {
-		log.Println("[INFO] Сервер запущен на порту", cfg.Server.Port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("[ERROR] Ошибка запуска сервера: ", err)
-		}
-	}()
-
+	// Ожидаем сигнал завершения
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	log.Println("[INFO] Завершение работы сервера...")
 
+	// Даём серверу 5 секунд на graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal("[ERROR] Ошибка при завершении сервера: ", err)
-	}
-
-	log.Println("[INFO] Сервер остановлен")
+	// Останавливаем сервер
+	srv.Stop(ctx)
 }
