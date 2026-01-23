@@ -1,4 +1,6 @@
-CREATE TABLE objects
+CREATE EXTENSION IF NOT EXISTS postgis;
+
+CREATE TABLE histproject.objects
 (
     id                SERIAL PRIMARY KEY,                            -- Уникальный идентификатор объекта
     submission_id     INTEGER,                                       -- ID заявки, из которой создан объект
@@ -12,6 +14,6 @@ CREATE TABLE objects
     updated_at        TIMESTAMP              NOT NULL DEFAULT NOW()  -- Дата последнего обновления
 ); -- Таблица всех исторических объектов, которые будут отображены на карте
 
-CREATE INDEX ind_objects_event_type ON objects (event_type_id);
-CREATE INDEX ind_objects_coordinates ON objects USING GIST (coordinates);
-CREATE INDEX ind_objects_submission_id ON objects (submission_id);
+CREATE INDEX ind_objects_event_type ON histproject.objects (event_type_id);
+CREATE INDEX ind_objects_coordinates ON histproject.objects USING GIST (coordinates);
+CREATE INDEX ind_objects_submission_id ON histproject.objects (submission_id);
