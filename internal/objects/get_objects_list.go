@@ -43,7 +43,6 @@ func GetObjectsList(c *gin.Context) {
 
 	// Отправляем успешный ответ
 	c.JSON(http.StatusOK, gin.H{
-		"message": "success",
 		"objects": resp.Objects,
 	})
 

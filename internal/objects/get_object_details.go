@@ -9,13 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetObjectDetailsReq - структура запроса для получения данных о конкретном объекта
-type GetObjectDetailsReq struct {
+// GetObjectDataReq - структура запроса для получения данных о конкретном объекта
+type GetObjectDataReq struct {
 	ObjectId int `json:"objectId" bindind:"required,gt=0"` // ID объекта (метки на карте), для которого надо получить данные
 }
 
-// GetObjectDetailsResp - структура ответа для получения данных о конкретном объекта
-type GetObjectDetailsResp struct {
+// GetObjectDataResp - структура ответа для получения данных о конкретном объекта
+type GetObjectDataResp struct {
 	// Object - словарь, который содержит информацию об одном объекте:
 	// id - ID объекта
 	// title - название объекта
@@ -26,13 +26,10 @@ type GetObjectDetailsResp struct {
 	Object ObjectInfo `json:"object"`
 }
 
-// GetObjectDetails - HTTP-хендлер для получения данных для конкретного объекта
-func GetObjectDetails(c *gin.Context) {
+// GetObjectData- HTTP-хендлер для получения данных для конкретного объекта
+func GetObjectData(c *gin.Context) {
 	// Инициализируем структуру запроса и ответа
-	//req := GetObjectDetailsReq{
-	//	ObjectId: 0,
-	//}
-	resp := GetObjectDetailsResp{
+	resp := GetObjectDataResp{
 		Object: ObjectInfo{
 			ID:              0,
 			Title:           "",
@@ -54,7 +51,7 @@ func GetObjectDetails(c *gin.Context) {
 	}
 
 	// Получаем данные об одном объекте по его ID
-	objectInfo, err := getObjectDetails(objectId)
+	objectInfo, err := getObjectData(objectId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Ошибка получения данных из БД: " + err.Error(),
@@ -66,8 +63,7 @@ func GetObjectDetails(c *gin.Context) {
 
 	// Отправляем успешный ответ
 	c.JSON(http.StatusOK, gin.H{
-		"message": "success",
-		"object":  resp.Object,
+		"object": resp.Object,
 	})
 }
 
@@ -81,8 +77,8 @@ type ObjectInfo struct {
 	PreviewUrlImage string `db:"preview_image_url" json:"previewUrlImage"`
 }
 
-// getObjectDetails - функция для получения информации об одном объекте из БД по его ID.
-func getObjectDetails(objectId int) (*ObjectInfo, error) {
+// GetObjectData- функция для получения информации об одном объекте из БД по его ID.
+func getObjectData(objectId int) (*ObjectInfo, error) {
 	var objectInfo ObjectInfo
 
 	query := `

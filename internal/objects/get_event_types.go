@@ -10,7 +10,6 @@ import (
 
 // GetEventTypesListResp - структура ответа для получения списка типов событий
 type GetEventTypesListResp struct {
-	Message string `json:"message"`
 	// EventTypes - массив словарей, каждый элемент которого содержит:
 	// id - ID типа события
 	// name - название типа события
@@ -33,7 +32,6 @@ func GetEventTypesList(c *gin.Context) {
 	}
 
 	// Отправляем успешный ответ
-	resp.Message = "success"
 	resp.EventTypes = eventTypes
 	c.JSON(http.StatusOK, resp)
 }
