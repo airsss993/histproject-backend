@@ -27,8 +27,8 @@ func InitRoutes(r *gin.Engine, basePath string) {
 		})
 
 		// Эндпоинт для получения информации об одном объекте
-		public.GET("objects/getObjectDetails/:id", objects.GetObjectDetails)
+		public.GET("objects/get-object-details/:id", objects.GetObjectDetails)
 		// Эндпоинт для получения всех объектов с их информацией
-		public.GET("objects/getObjectsList", objects.GetObjectsList)
+		public.GET("objects/get-objects-list", objects.GetObjectsList)
 	}
 }
