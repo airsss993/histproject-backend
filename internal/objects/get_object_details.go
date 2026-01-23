@@ -38,18 +38,10 @@ func GetObjectDetails(c *gin.Context) {
 			Title:           "",
 			Description:     "",
 			EventDate:       "",
-			EventTypeID:     "",
+			EventTypeID:     0,
 			PreviewUrlImage: "",
 		},
 	}
-
-	// Парсим входящие данные в структуру запроса
-	//if err := c.ShouldBindJSON(&req); err != nil {
-	//	c.JSON(http.StatusBadRequest, gin.H{
-	//		"message": "Ошибка парсинга данных " + err.Error(),
-	//	})
-	//	return
-	//}
 
 	// Получаем ID объекта из параметров запроса
 	objectIdParam := c.Param("id")
