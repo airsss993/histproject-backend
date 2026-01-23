@@ -1,24 +1,27 @@
 package db
 
 import (
-	"database/sql"
 	"log"
 
-	"github.com/airsss993/histproject-backend/internal/config"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
-func ConnDB(cfg *config.Config) *sql.DB {
-	db, err := sql.Open("pgx", cfg.Database.DSN)
+var DB *sqlx.DB
+
+func ConnDB(dsn string) *sqlx.DB {
+	db, err := sqlx.Open("pgx", dsn)
 	if err != nil {
-		log.Fatalf("failed to connect to PostgreSQL: %s", err.Error())
+		log.Fatalf("ошибка подключения к PostgreSQL: %s", err.Error())
 	}
 
 	if err = db.Ping(); err != nil {
-		log.Fatalf("failed to ping database: %s", err.Error())
+		log.Fatalf("ошибка пинга БД: %s", err.Error())
 	}
 
-	log.Println("Successfully connected to DB!")
+	log.Println("Успешное подключение к БД!")
+
+	DB = db
 
 	return db
 }

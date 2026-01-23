@@ -13,45 +13,47 @@ type (
 	Config struct {
 		Server   Server
 		Database Database
-		App      App
 	}
 	Server struct {
-		Port string
+		Port     string
+		BasePath string
 	}
 
 	Database struct {
 		DSN string
 	}
-
-	App struct {
-		WebURL string
-	}
 )
 
+// Init загружает переменные окружения из .env файла и инициализирует конфигурацию приложения.
 func Init() (*Config, error) {
 	var cfg Config
 
 	err := godotenv.Load("../.env")
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Ошибка загрузки .env файла")
 	}
 
 	if err := setFromEnv(&cfg); err != nil {
-		return nil, fmt.Errorf("error loading .env file: %w", err)
+		return nil, fmt.Errorf("ошибка получения env переменных: %w", err)
 	}
 
 	return &cfg, nil
 }
 
+// setFromEnv заполняет структуру конфигурации значениями из переменных окружения и валидирует их наличие.
 func setFromEnv(cfg *Config) error {
 	cfg.Server.Port = os.Getenv("SERVER_PORT")
+	cfg.Server.BasePath = os.Getenv("BASE_PATH")
 	cfg.Database.DSN = os.Getenv("PG_DSN")
 
 	if cfg.Server.Port == "" {
-		return errors.New("SERVER_PORT environment variable is required")
+		return errors.New("SERVER_PORT должно быть указано")
+	}
+	if cfg.Server.BasePath == "" {
+		return errors.New("BASE_PATH должно быть указано")
 	}
 	if cfg.Database.DSN == "" {
-		return errors.New("PG_DSN environment variable is required")
+		return errors.New("PG_DSN должно быть указано")
 	}
 
 	return nil
