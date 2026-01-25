@@ -21,7 +21,12 @@ type GetObjectsListResp struct {
 	Objects []ObjectInfo `json:"objects"`
 }
 
-// GetObjectsList - HTTP-хендлер для получения списка объектов (меток на карте)
+// @Summary		Получение списка объектов
+// @Description	Метод для получения списка объектов.
+// @Tags		Объекты
+// @Produce		json
+// @Success		200	{objects} ObjectInfo
+// @Router		/objects/get-objects-list [get]
 func GetObjectsList(c *gin.Context) {
 	// Инициализируем структуру ответа
 	//out := GetObjectsListResp{

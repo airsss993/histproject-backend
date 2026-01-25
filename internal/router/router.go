@@ -6,7 +6,7 @@ import (
 	_ "github.com/airsss993/histproject-backend/docs"
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
+	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
@@ -19,6 +19,8 @@ func New() *gin.Engine {
 }
 
 func InitRoutes(r *gin.Engine) {
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
 	// Публичные роуты, не требующие проверки авторизации
 	public := r.Group("/api")
 	{

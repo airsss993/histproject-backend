@@ -27,7 +27,7 @@ type (
 func Init() (*Config, error) {
 	var cfg Config
 
-	err := godotenv.Load("../.env")
+	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Ошибка загрузки .env файла")
 	}
