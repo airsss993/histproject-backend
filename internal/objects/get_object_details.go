@@ -26,7 +26,13 @@ type GetObjectDataResp struct {
 	Object ObjectInfo `json:"object"`
 }
 
-// GetObjectData- HTTP-хендлер для получения данных для конкретного объекта
+// @Summary		Получение данных для конкретного объекта
+// @Description	Метод для получения данных о конкретном объекте (метки на карте)
+// @Tags		Объекты
+// @Produce		json
+// @Param		id	path		int	true	"ID получаемого объекта (метки на карте)"
+// @Success		200	{object} ObjectInfo
+// @Router		/objects/get-object-data/{id} [get]
 func GetObjectData(c *gin.Context) {
 	// Инициализируем структуру запроса и ответа
 	resp := GetObjectDataResp{

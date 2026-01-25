@@ -1,0 +1,107 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Серверное REST API исторической платформы, разработанное на Go с использованием Gin.",
+        "title": "Документация API исторической платформы",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:7666",
+    "basePath": "/api",
+    "paths": {
+        "/objects/get-event-types-list": {
+            "get": {
+                "description": "Метод для получения списка типов событий.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Метки"
+                ],
+                "summary": "Получение списка типов событий",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "events"
+                        }
+                    }
+                }
+            }
+        },
+        "/objects/get-object-data/{id}": {
+            "get": {
+                "description": "Метод для получения данных о конкретном объекте (метки на карте)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Объекты"
+                ],
+                "summary": "Получение данных для конкретного объекта",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID получаемого объекта (метки на карте)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/objects.ObjectInfo"
+                        }
+                    }
+                }
+            }
+        },
+        "/objects/get-objects-list": {
+            "get": {
+                "description": "Метод для получения списка объектов.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Объекты"
+                ],
+                "summary": "Получение списка объектов",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "objects"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "objects.ObjectInfo": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "eventDate": {
+                    "type": "string"
+                },
+                "eventType": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "previewUrlImage": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

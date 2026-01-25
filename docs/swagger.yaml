@@ -1,0 +1,71 @@
+basePath: /api
+definitions:
+  objects.ObjectInfo:
+    properties:
+      description:
+        type: string
+      eventDate:
+        type: string
+      eventType:
+        type: integer
+      id:
+        type: integer
+      previewUrlImage:
+        type: string
+      title:
+        type: string
+    type: object
+host: localhost:7666
+info:
+  contact: {}
+  description: Серверное REST API исторической платформы, разработанное на Go с использованием
+    Gin.
+  title: Документация API исторической платформы
+  version: "1.0"
+paths:
+  /objects/get-event-types-list:
+    get:
+      description: Метод для получения списка типов событий.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: events
+      summary: Получение списка типов событий
+      tags:
+      - Метки
+  /objects/get-object-data/{id}:
+    get:
+      description: Метод для получения данных о конкретном объекте (метки на карте)
+      parameters:
+      - description: ID получаемого объекта (метки на карте)
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/objects.ObjectInfo'
+      summary: Получение данных для конкретного объекта
+      tags:
+      - Объекты
+  /objects/get-objects-list:
+    get:
+      description: Метод для получения списка объектов.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: objects
+      summary: Получение списка объектов
+      tags:
+      - Объекты
+swagger: "2.0"

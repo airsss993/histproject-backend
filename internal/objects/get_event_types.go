@@ -17,7 +17,12 @@ type GetEventTypesListResp struct {
 	EventTypes []EventTypeInfo `json:"eventTypes"`
 }
 
-// GetEventTypesList - HTTP-хендлер для получения списка типов событий
+// @Summary		Получение списка типов событий
+// @Description	Метод для получения списка типов событий.
+// @Tags		Метки
+// @Produce		json
+// @Success		200	{events} EventTypeInfo
+// @Router		/objects/get-event-types-list [get]
 func GetEventTypesList(c *gin.Context) {
 	// Инициализируем структуру ответа
 	resp := GetEventTypesListResp{}

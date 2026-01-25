@@ -3,21 +3,26 @@ package router
 import (
 	"net/http"
 
+	_ "github.com/airsss993/histproject-backend/docs"
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func New(basePath string) *gin.Engine {
+func New() *gin.Engine {
 	r := gin.Default()
 
-	InitRoutes(r, basePath)
+	InitRoutes(r)
 
 	return r
 }
 
-func InitRoutes(r *gin.Engine, basePath string) {
+func InitRoutes(r *gin.Engine) {
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
 	// Публичные роуты, не требующие проверки авторизации
-	public := r.Group(basePath)
+	public := r.Group("/api")
 	{
 		// Тестовый эндпоинт для проверки работы сервера
 		public.GET("/ping", func(c *gin.Context) {
