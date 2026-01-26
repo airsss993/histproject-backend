@@ -25,7 +25,7 @@ func Run() {
 	_ = db.ConnDB(cfg.Database.DSN)
 
 	// Создаем роутер
-	r := router.New()
+	r := router.New(cfg)
 
 	// Создаем сервер и запускаем его
 	srv := server.New(cfg.Server.Port, r)

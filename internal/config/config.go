@@ -13,6 +13,7 @@ type (
 	Config struct {
 		Server   Server
 		Database Database
+		CORS     CORS
 	}
 	Server struct {
 		Port string
@@ -20,6 +21,10 @@ type (
 
 	Database struct {
 		DSN string
+	}
+
+	CORS struct {
+		AllowedOrigins string
 	}
 )
 
@@ -43,6 +48,7 @@ func Init() (*Config, error) {
 func setFromEnv(cfg *Config) error {
 	cfg.Server.Port = os.Getenv("SERVER_PORT")
 	cfg.Database.DSN = os.Getenv("PG_DSN")
+	cfg.CORS.AllowedOrigins = os.Getenv("CORS_ALLOWED_ORIGINS")
 
 	if cfg.Server.Port == "" {
 		return errors.New("SERVER_PORT должно быть указано")
