@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -32,10 +31,7 @@ type (
 func Init() (*Config, error) {
 	var cfg Config
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Ошибка загрузки .env файла")
-	}
+	_ = godotenv.Load()
 
 	if err := setFromEnv(&cfg); err != nil {
 		return nil, fmt.Errorf("ошибка получения env переменных: %w", err)

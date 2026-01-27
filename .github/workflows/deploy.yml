@@ -1,0 +1,54 @@
+name: Deploy to Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - production
+          - staging
+      image_tag:
+        description: 'Image tag to deploy (default: main)'
+        required: false
+        default: 'main'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /root/histproject-dev
+            
+            echo "🔄 Скачивание образа ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}"
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
+            
+            echo "🛑 Остановка контейнеров..."
+            docker-compose down
+            
+            echo "🚀 Запуск новых контейнеров..."
+            docker-compose up -d
+            
+            echo "🧹 Удаление неиспользуемые образы..."
+            docker image prune -f
+            
+            echo "✅ Деплой успешен!"
+            docker-compose ps
+
+      - name: Notify success
+        if: success()
+        run: echo "✅ Успешно задеплоено на ${{ inputs.environment }}"
