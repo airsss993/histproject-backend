@@ -3,13 +3,6 @@ name: Deploy to Server
 on:
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Environment to deploy'
-        required: true
-        type: choice
-        options:
-          - production
-          - staging
       image_tag:
         description: 'Image tag to deploy (default: main)'
         required: false
