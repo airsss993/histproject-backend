@@ -76,7 +76,7 @@ func getObjectsListFromDB(eventTypesIds []int, dateFrom, dateTo string) ([]Objec
 		    event_type_id,
 		    preview_image_url
 		FROM
-		    histproject.objects`
+		    objects`
 
 	var args []interface{}
 	argPos := 1

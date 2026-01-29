@@ -2,7 +2,8 @@ name: "histproject-backend"
 
 services:
   app:
-    image: ghcr.io/airsss993/histproject-backend:latest
+    image: ghcr.io/airsss993/histproject-backend:main
+    pull_policy: always
     build: .
     ports:
       - "7666:7666"

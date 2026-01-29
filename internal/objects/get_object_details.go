@@ -96,7 +96,7 @@ func getObjectData(objectId int) (*ObjectInfo, error) {
 		    event_type_id,
 		    preview_image_url
 		FROM
-		    histproject.objects
+		    objects
 		WHERE id = $1`
 
 	err := db.DB.Get(&objectInfo, query, objectId)

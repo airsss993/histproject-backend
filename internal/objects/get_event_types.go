@@ -58,7 +58,7 @@ func getEventTypesListFromDB() ([]EventTypeInfo, error) {
 		    name,
 		    description
 		FROM
-		    histproject.event_types`
+		    event_types`
 
 	err := db.DB.Select(&eventTypesInfo, query)
 	if err != nil {

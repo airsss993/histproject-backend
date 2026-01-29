@@ -44,4 +44,4 @@ jobs:
 
       - name: Notify success
         if: success()
-        run: echo "✅ Успешно задеплоено на ${{ inputs.environment }}"
+        run: echo "✅ Успешно задеплоено на ${{ secrets.SERVER_HOST }}"
