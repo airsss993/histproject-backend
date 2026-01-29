@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	_ "github.com/airsss993/histproject-backend/docs"
+	"github.com/airsss993/histproject-backend/docs"
 	"github.com/airsss993/histproject-backend/internal/config"
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/gin-gonic/gin"
@@ -16,12 +16,13 @@ func New(cfg *config.Config) *gin.Engine {
 	r := gin.Default()
 	r.Use(corsMiddleware(cfg.CORS.AllowedOrigins))
 
-	InitRoutes(r)
+	InitRoutes(r, cfg.App.SwaggerHost)
 
 	return r
 }
 
-func InitRoutes(r *gin.Engine) {
+func InitRoutes(r *gin.Engine, swaggerHost string) {
+	docs.SwaggerInfo.Host = swaggerHost
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
 	// Публичные роуты, не требующие проверки авторизации

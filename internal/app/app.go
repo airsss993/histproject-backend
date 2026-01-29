@@ -34,7 +34,7 @@ func Run() {
 	r := router.New(cfg)
 
 	// Создаем сервер и запускаем его
-	srv := server.New(cfg.Server.Port, r)
+	srv := server.New(cfg.App.Port, r)
 	srv.Start()
 
 	// Ожидаем сигнал завершения
