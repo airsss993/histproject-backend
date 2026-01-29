@@ -11,6 +11,7 @@ import (
 	"github.com/airsss993/histproject-backend/internal/config"
 	"github.com/airsss993/histproject-backend/internal/router"
 	"github.com/airsss993/histproject-backend/internal/server"
+	"github.com/airsss993/histproject-backend/migrations"
 	"github.com/airsss993/histproject-backend/pkg/db"
 )
 
@@ -22,7 +23,12 @@ func Run() {
 	}
 
 	// Создаем подключение к БД
-	_ = db.ConnDB(cfg.Database.DSN)
+	conn := db.ConnDB(cfg.Database.DSN)
+
+	// Выполняем миграции
+	if err := migrations.Run(conn.DB); err != nil {
+		log.Fatal("Ошибка выполнения миграций: ", err)
+	}
 
 	// Создаем роутер
 	r := router.New(cfg)
