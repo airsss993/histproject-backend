@@ -31,7 +31,8 @@ type GetObjectDataResp struct {
 // @Tags		Объекты
 // @Produce		json
 // @Param		id	path		int	true	"ID получаемого объекта (метки на карте)"
-// @Success		200	{object} ObjectInfo
+// @Success		200	{object}	map[string]ObjectInfo
+// @Failure		400	{object}	map[string]string
 // @Router		/objects/get-object-data/{id} [get]
 func GetObjectData(c *gin.Context) {
 	// Инициализируем структуру запроса и ответа

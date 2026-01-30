@@ -18,10 +18,11 @@ type GetEventTypesListResp struct {
 }
 
 // @Summary		Получение списка типов событий
-// @Description	Метод для получения списка типов событий.
-// @Tags		Метки
+// @Description	Метод для получения списка типов событий
+// @Tags		Объекты
 // @Produce		json
-// @Success		200	{events} EventTypeInfo
+// @Success		200	{object}	GetEventTypesListResp
+// @Failure		400	{object}	map[string]string
 // @Router		/objects/get-event-types-list [get]
 func GetEventTypesList(c *gin.Context) {
 	// Инициализируем структуру ответа

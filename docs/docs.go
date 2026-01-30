@@ -17,19 +17,28 @@ const docTemplate = `{
     "paths": {
         "/objects/get-event-types-list": {
             "get": {
-                "description": "Метод для получения списка типов событий.",
+                "description": "Метод для получения списка типов событий",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "Метки"
+                    "Объекты"
                 ],
                 "summary": "Получение списка типов событий",
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "events"
+                            "$ref": "#/definitions/objects.GetEventTypesListResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -58,15 +67,30 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/objects.ObjectInfo"
+                            "type": "object",
+                            "additionalProperties": {
+                                "$ref": "#/definitions/objects.ObjectInfo"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
             }
         },
         "/objects/get-objects-list": {
-            "get": {
-                "description": "Метод для получения списка объектов.",
+            "post": {
+                "description": "Метод для получения списка объектов с возможностью фильтрации по типам событий и датам",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -74,11 +98,30 @@ const docTemplate = `{
                     "Объекты"
                 ],
                 "summary": "Получение списка объектов",
+                "parameters": [
+                    {
+                        "description": "Параметры фильтрации (опционально)",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/objects.GetObjectsListReq"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "objects"
+                            "$ref": "#/definitions/objects.GetObjectsListResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -86,6 +129,61 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "objects.EventTypeInfo": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "objects.GetEventTypesListResp": {
+            "type": "object",
+            "properties": {
+                "eventTypes": {
+                    "description": "EventTypes - массив словарей, каждый элемент которого содержит:\nid - ID типа события\nname - название типа события\ndescription - описание типа события",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/objects.EventTypeInfo"
+                    }
+                }
+            }
+        },
+        "objects.GetObjectsListReq": {
+            "type": "object",
+            "properties": {
+                "dateFrom": {
+                    "type": "string"
+                },
+                "dateTo": {
+                    "type": "string"
+                },
+                "eventTypeIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "objects.GetObjectsListResp": {
+            "type": "object",
+            "properties": {
+                "objects": {
+                    "description": "Objects - массив словарей, каждый элемент которого содержит:\nid - ID объекта\ntitle - название объекта\ndescription - описание объекта\ncoordinates - координаты объекта\neventDate - дата события объекта\neventType - тип объекта\npreviewUrlImage - URL картинки превью объекта",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/objects.ObjectInfo"
+                    }
+                }
+            }
+        },
         "objects.ObjectInfo": {
             "type": "object",
             "properties": {
@@ -115,7 +213,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:7666",
+	Host:             "",
 	BasePath:         "/api",
 	Schemes:          []string{},
 	Title:            "Документация API исторической платформы",

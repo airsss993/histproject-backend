@@ -1,5 +1,53 @@
 basePath: /api
 definitions:
+  objects.EventTypeInfo:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  objects.GetEventTypesListResp:
+    properties:
+      eventTypes:
+        description: |-
+          EventTypes - массив словарей, каждый элемент которого содержит:
+          id - ID типа события
+          name - название типа события
+          description - описание типа события
+        items:
+          $ref: '#/definitions/objects.EventTypeInfo'
+        type: array
+    type: object
+  objects.GetObjectsListReq:
+    properties:
+      dateFrom:
+        type: string
+      dateTo:
+        type: string
+      eventTypeIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  objects.GetObjectsListResp:
+    properties:
+      objects:
+        description: |-
+          Objects - массив словарей, каждый элемент которого содержит:
+          id - ID объекта
+          title - название объекта
+          description - описание объекта
+          coordinates - координаты объекта
+          eventDate - дата события объекта
+          eventType - тип объекта
+          previewUrlImage - URL картинки превью объекта
+        items:
+          $ref: '#/definitions/objects.ObjectInfo'
+        type: array
+    type: object
   objects.ObjectInfo:
     properties:
       description:
@@ -15,7 +63,6 @@ definitions:
       title:
         type: string
     type: object
-host: localhost:7666
 info:
   contact: {}
   description: Серверное REST API исторической платформы, разработанное на Go с использованием
@@ -25,17 +72,23 @@ info:
 paths:
   /objects/get-event-types-list:
     get:
-      description: Метод для получения списка типов событий.
+      description: Метод для получения списка типов событий
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            type: events
+            $ref: '#/definitions/objects.GetEventTypesListResp'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       summary: Получение списка типов событий
       tags:
-      - Метки
+      - Объекты
   /objects/get-object-data/{id}:
     get:
       description: Метод для получения данных о конкретном объекте (метки на карте)
@@ -51,20 +104,43 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/objects.ObjectInfo'
+            additionalProperties:
+              $ref: '#/definitions/objects.ObjectInfo'
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       summary: Получение данных для конкретного объекта
       tags:
       - Объекты
   /objects/get-objects-list:
-    get:
-      description: Метод для получения списка объектов.
+    post:
+      consumes:
+      - application/json
+      description: Метод для получения списка объектов с возможностью фильтрации по
+        типам событий и датам
+      parameters:
+      - description: Параметры фильтрации (опционально)
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/objects.GetObjectsListReq'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            type: objects
+            $ref: '#/definitions/objects.GetObjectsListResp'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
       summary: Получение списка объектов
       tags:
       - Объекты

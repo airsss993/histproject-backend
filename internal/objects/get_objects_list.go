@@ -30,11 +30,14 @@ type GetObjectsListResp struct {
 }
 
 // @Summary		Получение списка объектов
-// @Description	Метод для получения списка объектов.
+// @Description	Метод для получения списка объектов с возможностью фильтрации по типам событий и датам
 // @Tags		Объекты
+// @Accept		json
 // @Produce		json
-// @Success		200	{objects} ObjectInfo
-// @Router		/objects/get-objects-list [get]
+// @Param		request	body	GetObjectsListReq	false	"Параметры фильтрации (опционально)"
+// @Success		200	{object}	GetObjectsListResp
+// @Failure		400	{object}	map[string]string
+// @Router		/objects/get-objects-list [post]
 func GetObjectsList(c *gin.Context) {
 	// Инициализируем структуру запроса для того чтобы заполнить её данными
 	var req GetObjectsListReq
