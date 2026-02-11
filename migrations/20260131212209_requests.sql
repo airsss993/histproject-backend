@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 
 -- Таблица заявок
-CREATE TYPE request_status AS ENUM ('Новая', 'Принята', 'Отклонена', 'Опубликована');
+CREATE TYPE request_status AS ENUM ('Новая', 'На модерации', 'Отклонена', 'Опубликована');
 
 CREATE TABLE requests
 (
@@ -12,6 +12,8 @@ CREATE TABLE requests
     email             VARCHAR(100)   NOT NULL,                 -- Почта пользователя, который отправил заявку
     telegram_username VARCHAR(100)   NOT NULL,                 -- Имя пользователя в Telegram, который отправил заявку
     archive_url       VARCHAR(200)   NOT NULL,                 -- Ссылка на архив с сайтом в бакете
+    site_url          VARCHAR(200),                            -- URL развернутого сайта для просмотра
+    screenshot_url    VARCHAR(200),                            -- Скриншот главной страницы
     status            request_status NOT NULL DEFAULT 'Новая', -- Статус заявки
     admin_comment     TEXT,                                    -- Комментарий админа, при отклонение заявки
     created_at        TIMESTAMP      NOT NULL DEFAULT NOW(),   -- Дата создания записи
