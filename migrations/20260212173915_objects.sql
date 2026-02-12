@@ -1,16 +1,5 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE EXTENSION IF NOT EXISTS postgis;
-
--- Таблица с типами меток
-CREATE TABLE event_types
-(
-    id          SERIAL PRIMARY KEY,    -- ID метки
-    name        VARCHAR(50)  NOT NULL, -- Название типа метки
-    description VARCHAR(200) NOT NULL  -- Описание типа метки
-);
-
-CREATE INDEX ind_event_types_id ON event_types (id);
 
 -- Таблица всех исторических объектов, которые будут отображены на карте
 CREATE TABLE objects
@@ -22,8 +11,8 @@ CREATE TABLE objects
     coordinates       GEOGRAPHY(Point, 4326) NOT NULL,                             -- Географические координаты
     event_date        DATE                   NOT NULL,                             -- Дата исторического события
     event_type_id     INTEGER                NOT NULL REFERENCES event_types (id), -- ID типа события
-    site_url          VARCHAR(200)           NOT NULL,                             -- URL сайта для показа на фронте
-    preview_image_url VARCHAR(200),                                                -- URL объекта для отображения в карточке
+    site_url          VARCHAR(200)           NOT NULL,                             -- URL сайта пользователя
+    preview_image_url VARCHAR(200),                                                -- URL скриншота сайта для отображения в карточке
     created_at        TIMESTAMP              NOT NULL DEFAULT NOW(),               -- Дата создания записи
     updated_at        TIMESTAMP              NOT NULL DEFAULT NOW()                -- Дата последнего обновления
 );
@@ -36,5 +25,4 @@ CREATE INDEX ind_objects_request_id ON objects (request_id);
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS objects CASCADE;
-DROP TABLE IF EXISTS event_types CASCADE;
 -- +goose StatementEnd
