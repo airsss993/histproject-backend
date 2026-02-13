@@ -15,15 +15,16 @@ const maxArchiveSize = 50 * 1024 * 1024
 
 // CreateRequestReq - структура запроса для создания новой заявки
 type CreateRequestReq struct {
-	Title       string                `form:"title" binding:"required,max=200"`
-	Description string                `form:"description" binding:"required"`
-	EventDate   string                `form:"eventDate" binding:"required,datetime=2006-01-02"`
-	EventTypeId int                   `form:"eventTypeId" binding:"required,gt=0"`
-	Email       string                `form:"email" binding:"required,email"`
-	Telegram    string                `form:"telegramUsername" binding:"required"`
-	Archive     *multipart.FileHeader `form:"archive" binding:"required"`
+	Title            string                `form:"title" binding:"required,max=200"`
+	Description      string                `form:"description" binding:"required"`
+	EventDate        string                `form:"eventDate" binding:"required,datetime=2006-01-02"`
+	EventTypeId      int                   `form:"eventTypeId" binding:"required,gt=0"`
+	Email            string                `form:"email" binding:"required,email,max=70"`
+	TelegramUsername string                `form:"telegramUsername" binding:"required"`
+	Archive          *multipart.FileHeader `form:"archive" binding:"required"`
 }
 
+// Структура для сохранения в БД
 type RequestData struct {
 	Title            string
 	Description      string
@@ -72,7 +73,7 @@ func CreateRequest(c *gin.Context) {
 		Title:            req.Title,
 		Description:      req.Description,
 		Email:            req.Email,
-		TelegramUsername: req.Telegram,
+		TelegramUsername: req.TelegramUsername,
 		EventDate:        req.EventDate,
 		EventTypeId:      req.EventTypeId,
 	}
