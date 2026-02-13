@@ -13,6 +13,7 @@ import (
 	"github.com/airsss993/histproject-backend/internal/server"
 	"github.com/airsss993/histproject-backend/migrations"
 	"github.com/airsss993/histproject-backend/pkg/db"
+	"github.com/airsss993/histproject-backend/pkg/storage"
 )
 
 func Run() {
@@ -24,6 +25,11 @@ func Run() {
 
 	// Создаем подключение к БД
 	conn := db.ConnDB(cfg.Database.DSN)
+
+	storageMinio := storage.NewMinioClient(cfg.Storage)
+	if err := storageMinio.InitMinio(); err != nil {
+		log.Fatal("Ошибка подключения к MinIO: ", err)
+	}
 
 	// Выполняем миграции
 	if err := migrations.Run(conn.DB); err != nil {
