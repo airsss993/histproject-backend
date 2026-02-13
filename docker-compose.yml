@@ -34,16 +34,17 @@ services:
 
   minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-    restart: unless-stopped
-    volumes:
-      - minio-storage:/data
-      - minio-config:/root/.minio
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio-storage:/data
+    ports:
+      - "9011:9001"
+      - "9010:9000"
     command: server /data --console-address ":9001"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -51,4 +52,3 @@ services:
 volumes:
   db-data:
   minio-storage:
-  minio-config:
