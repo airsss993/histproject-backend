@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/airsss993/histproject-backend/pkg/db"
+	"github.com/airsss993/histproject-backend/pkg/storage"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,7 +31,7 @@ type RequestData struct {
 	Description      string
 	Email            string
 	TelegramUsername string
-	ArchiveURL       string
+	ArchiveId        string
 	SiteURL          string
 	ScreenshotURL    string
 	EventDate        string
@@ -52,7 +53,7 @@ func CreateRequest(c *gin.Context) {
 
 	// Проверяем правильный формат архива - zip
 	if !strings.Contains(req.Archive.Filename, ".zip") {
-		c.JSON(http.StatusCreated, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Архив должен иметь расширение zip",
 		})
 		return
@@ -60,13 +61,20 @@ func CreateRequest(c *gin.Context) {
 
 	// Проверяем допустимый размер архива
 	if req.Archive.Size > maxArchiveSize {
-		c.JSON(http.StatusCreated, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Файл должен быть не больше 50 МБ",
 		})
 		return
 	}
 
 	// Загружаем архив в бакет и возвращаем его путь
+	archiveId, err := storage.Client.UploadArchive(req.Archive)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Ошибка загрузки архива: " + err.Error(),
+		})
+		return
+	}
 
 	// Формируем структуру данных для сохранения в БД
 	requestData := RequestData{
@@ -76,11 +84,12 @@ func CreateRequest(c *gin.Context) {
 		TelegramUsername: req.TelegramUsername,
 		EventDate:        req.EventDate,
 		EventTypeId:      req.EventTypeId,
+		ArchiveId:        archiveId,
 	}
 
 	// Сохраняем новую заявку в БД
 	if err := createRequestSQL(requestData); err != nil {
-		c.JSON(http.StatusCreated, gin.H{
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Ошибка создания заявки: " + err.Error(),
 		})
 		return
@@ -108,7 +117,7 @@ func createRequestSQL(data RequestData) error {
 		VALUES
 		    ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
-	_, err := db.DB.Exec(query, data.Title, data.Description, data.Email, data.TelegramUsername, data.ArchiveURL, data.SiteURL, data.ScreenshotURL, data.EventDate, data.EventTypeId)
+	_, err := db.DB.Exec(query, data.Title, data.Description, data.Email, data.TelegramUsername, data.ArchiveId, data.SiteURL, data.ScreenshotURL, data.EventDate, data.EventTypeId)
 	if err != nil {
 		return fmt.Errorf("ошибка вставки новой записи о заявке в БД: %w", err)
 	}

@@ -26,10 +26,12 @@ func Run() {
 	// Создаем подключение к БД
 	conn := db.ConnDB(cfg.Database.DSN)
 
-	storageMinio := storage.NewMinioClient(cfg.Storage)
-	if err := storageMinio.InitMinio(); err != nil {
+	minioClient := storage.NewMinioClient(cfg.Storage)
+	if err := minioClient.InitMinio(); err != nil {
 		log.Fatal("Ошибка подключения к MinIO: ", err)
 	}
+	// Устанавливаем глобальный экземпляр MinIO клиента
+	storage.Client = minioClient
 
 	// Выполняем миграции
 	if err := migrations.Run(conn.DB); err != nil {

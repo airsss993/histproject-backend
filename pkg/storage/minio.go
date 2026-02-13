@@ -9,20 +9,22 @@ import (
 	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
-type MinioClient struct {
+var Client *minioClient
+
+type minioClient struct {
 	cfg config.Storage
 	mc  *minio.Client
 }
 
 // NewMinioClient создает новый экземпляр Minio Client
-func NewMinioClient(cfg config.Storage) *MinioClient {
-	return &MinioClient{
+func NewMinioClient(cfg config.Storage) *minioClient {
+	return &minioClient{
 		cfg: cfg,
 	}
 }
 
 // InitMinio подключается к Minio и создает бакет, если не существует
-func (m *MinioClient) InitMinio() error {
+func (m *minioClient) InitMinio() error {
 	// Создание контекста с возможностью отмены операции
 	ctx := context.Background()
 
