@@ -9,7 +9,7 @@ VALUES ('Расстрел/Расправа', 'Массовые расстрел�
        ('Восстание/Бунт', 'Народные восстания и бунты');
 
 -- Добавляем тестовую заявку (id сгенерируется автоматически = 1)
-INSERT INTO requests (title, description, event_date, event_type_id, email, telegram_username, archive_url, site_url, status)
+INSERT INTO requests (title, description, event_date, event_type_id, email, telegram_username, archive_id, site_url, status)
 VALUES ('Тестовая заявка для seed данных', 'Заявка для загрузки тестовых исторических объектов', '2024-01-01', 1,
         'test@example.com', 'testuser', 'https://example.com/archive.zip', 'https://example.com/test-site', 'Опубликована');
 
