@@ -1,8 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
 
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 -- Таблица с типами меток
 CREATE TABLE event_types
 (
