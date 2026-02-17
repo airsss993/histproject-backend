@@ -22,7 +22,8 @@ type GetObjectsListResp struct {
 	// id - ID объекта
 	// title - название объекта
 	// description - описание объекта
-	// coordinates - координаты объекта
+	// latitude - широта
+	// longitude - долгота
 	// eventDate - дата события объекта
 	// eventType - тип объекта
 	// previewUrlImage - URL картинки превью объекта
@@ -66,6 +67,17 @@ func GetObjectsList(c *gin.Context) {
 
 }
 
+type ObjectInfo struct {
+	ID              int    `db:"id" json:"id"`
+	Title           string `db:"title" json:"title"`
+	Description     string `db:"description" json:"description"`
+	Latitude        string `db:"latitude" json:"latitude"`
+	Longitude       string `db:"longitude" json:"longitude"`
+	EventDate       string `db:"event_date" json:"eventDate"`
+	EventTypeID     int    `db:"event_type_id" json:"eventType"`
+	PreviewUrlImage string `db:"preview_image_url" json:"previewUrlImage"`
+}
+
 // getObjectsListFromDB - функция для получения информации о всех объектах из БД.
 func getObjectsListFromDB(eventTypesIds []int, dateFrom, dateTo string) ([]ObjectInfo, error) {
 	var objectsInfo []ObjectInfo
@@ -75,6 +87,8 @@ func getObjectsListFromDB(eventTypesIds []int, dateFrom, dateTo string) ([]Objec
 		    id,
 		    title,
 		    description,
+		    latitude,
+		    longitude,
 		    event_date,
 		    event_type_id,
 		    preview_image_url

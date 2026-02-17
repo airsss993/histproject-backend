@@ -5,6 +5,6 @@
 ## Стек
 
 - Go v1.25+
-- PostgreSQL + PostGIS
+- PostgreSQL
 - MinIO
 - n8n
