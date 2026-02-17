@@ -23,7 +23,7 @@ type GetObjectDataResp struct {
 	// eventDate - дата события объекта
 	// eventTypeId - ID типа объекта
 	// previewUrlImage - URL картинки превью объекта
-	Object ObjectInfo `json:"object"`
+	Object SingleObjectInfo `json:"object"`
 }
 
 // @Summary		Получение данных для конкретного объекта
@@ -37,7 +37,7 @@ type GetObjectDataResp struct {
 func GetObjectData(c *gin.Context) {
 	// Инициализируем структуру запроса и ответа
 	resp := GetObjectDataResp{
-		Object: ObjectInfo{
+		Object: SingleObjectInfo{
 			ID:              0,
 			Title:           "",
 			Description:     "",
@@ -58,7 +58,7 @@ func GetObjectData(c *gin.Context) {
 	}
 
 	// Получаем данные об одном объекте по его ID
-	objectInfo, err := getObjectData(objectId)
+	singleObjectInfo, err := getObjectData(objectId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Ошибка получения данных из БД: " + err.Error(),
@@ -66,7 +66,7 @@ func GetObjectData(c *gin.Context) {
 		return
 	}
 
-	resp.Object = *objectInfo
+	resp.Object = *singleObjectInfo
 
 	// Отправляем успешный ответ
 	c.JSON(http.StatusOK, gin.H{
@@ -75,7 +75,7 @@ func GetObjectData(c *gin.Context) {
 }
 
 // Модель объекта (как он лежит в БД и как уходит в JSON)
-type ObjectInfo struct {
+type SingleObjectInfo struct {
 	ID              int    `db:"id" json:"id"`
 	Title           string `db:"title" json:"title"`
 	Description     string `db:"description" json:"description"`
@@ -85,8 +85,8 @@ type ObjectInfo struct {
 }
 
 // GetObjectData- функция для получения информации об одном объекте из БД по его ID.
-func getObjectData(objectId int) (*ObjectInfo, error) {
-	var objectInfo ObjectInfo
+func getObjectData(objectId int) (*SingleObjectInfo, error) {
+	var objectInfo SingleObjectInfo
 
 	query := `
 		SELECT
