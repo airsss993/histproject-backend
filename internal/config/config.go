@@ -14,6 +14,7 @@ type (
 		Database Database
 		CORS     CORS
 		Storage  Storage
+		Redis    Redis
 	}
 	App struct {
 		Port        string
@@ -29,6 +30,12 @@ type (
 		MinioPassword   string
 		MinioEndpoint   string
 		MinioBucketName string
+	}
+
+	Redis struct {
+		RedisPassword string
+		RedisAddress  string
+		RedisDb       string
 	}
 
 	CORS struct {
@@ -62,6 +69,10 @@ func setFromEnv(cfg *Config) error {
 	cfg.Storage.MinioPassword = os.Getenv("MINIO_ROOT_PASSWORD")
 	cfg.Storage.MinioBucketName = os.Getenv("MINIO_BUCKET_NAME")
 
+	cfg.Redis.RedisPassword = os.Getenv("REDIS_PASSWORD")
+	cfg.Redis.RedisAddress = os.Getenv("REDIS_ADDRESS")
+	cfg.Redis.RedisDb = os.Getenv("REDIS_DB")
+
 	if cfg.App.Port == "" {
 		return errors.New("SERVER_PORT должно быть указано")
 	}
@@ -82,6 +93,16 @@ func setFromEnv(cfg *Config) error {
 	}
 	if cfg.Storage.MinioBucketName == "" {
 		return errors.New("MINIO_BUCKET_NAME должно быть указано")
+	}
+
+	if cfg.Redis.RedisPassword == "" {
+		return errors.New("REDIS_PASSWORD должно быть указано")
+	}
+	if cfg.Redis.RedisAddress == "" {
+		return errors.New("REDIS_ADDRESS должно быть указано")
+	}
+	if cfg.Redis.RedisDb == "" {
+		return errors.New("REDIS_DB должно быть указано")
 	}
 
 	return nil
