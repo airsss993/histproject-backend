@@ -109,7 +109,7 @@ func createRequestSQL(data RequestData) error {
 		    description,
 			email,
 			telegram_username,
-			archive_url,
+			archive_id,
 			site_url,
 			screenshot_url,
 		    event_date,
