@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
@@ -35,7 +36,7 @@ type (
 	Redis struct {
 		RedisPassword string
 		RedisAddress  string
-		RedisDb       string
+		RedisDb       int
 	}
 
 	CORS struct {
@@ -71,7 +72,7 @@ func setFromEnv(cfg *Config) error {
 
 	cfg.Redis.RedisPassword = os.Getenv("REDIS_PASSWORD")
 	cfg.Redis.RedisAddress = os.Getenv("REDIS_ADDRESS")
-	cfg.Redis.RedisDb = os.Getenv("REDIS_DB")
+	cfg.Redis.RedisDb, _ = strconv.Atoi(os.Getenv("REDIS_DB"))
 
 	if cfg.App.Port == "" {
 		return errors.New("SERVER_PORT должно быть указано")
@@ -100,9 +101,6 @@ func setFromEnv(cfg *Config) error {
 	}
 	if cfg.Redis.RedisAddress == "" {
 		return errors.New("REDIS_ADDRESS должно быть указано")
-	}
-	if cfg.Redis.RedisDb == "" {
-		return errors.New("REDIS_DB должно быть указано")
 	}
 
 	return nil
