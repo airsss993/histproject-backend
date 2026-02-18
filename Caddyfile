@@ -1,3 +1,0 @@
-155-212-132-55.sslip.io {
-    reverse_proxy app:7666
-}
