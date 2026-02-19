@@ -131,7 +131,7 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 	// 3. Навигация к сайту и создание скриншота
 	if err := chromedp.Run(ctx,
 		chromedp.Navigate(siteUrl),
-		chromedp.FullScreenshot(&buf, 90),
+		chromedp.FullScreenshot(&buf, 100),
 	); err != nil {
 		return "", fmt.Errorf("ошибка при создании скриншота: %w", err)
 	}
