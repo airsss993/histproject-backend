@@ -10,7 +10,7 @@ import (
 )
 
 // UploadArchive - функция загрузки архива в бакет MinIO
-func (m *minioClient) UploadArchive(file *multipart.FileHeader) (string, error) {
+func (m *MinioClient) UploadArchive(file *multipart.FileHeader) (string, error) {
 	objectId := uuid.New().String()
 
 	fileReader, err := file.Open()
