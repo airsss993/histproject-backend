@@ -41,15 +41,33 @@ func (m *MinioClient) InitMinio() error {
 	m.mc = client
 
 	// Проверка наличия бакета и его создание, если не существует
-	exists, err := m.mc.BucketExists(ctx, m.cfg.MinioBucketName)
+	exists, err := m.mc.BucketExists(ctx, RequestsBucketName)
 	if err != nil {
-		return fmt.Errorf("ошибка проверки наличия бакета: %w", err)
+		return fmt.Errorf("ошибка проверки наличия бакета requests: %w", err)
 	}
 	if !exists {
-		err := m.mc.MakeBucket(ctx, m.cfg.MinioBucketName, minio.MakeBucketOptions{})
+		err := m.mc.MakeBucket(ctx, RequestsBucketName, minio.MakeBucketOptions{})
 		if err != nil {
-			return fmt.Errorf("ошибка создания бакета: %w", err)
+			return fmt.Errorf("ошибка создания бакета requests: %w", err)
 		}
+	}
+
+	// Проверка наличия бакета и его создание, если не существует
+	exists, err = m.mc.BucketExists(ctx, SitesBucketName)
+	if err != nil {
+		return fmt.Errorf("ошибка проверки наличия бакета sites: %w", err)
+	}
+	if !exists {
+		err := m.mc.MakeBucket(ctx, SitesBucketName, minio.MakeBucketOptions{})
+		if err != nil {
+			return fmt.Errorf("ошибка создания бакета sites: %w", err)
+		}
+	}
+
+	// Устанавливаем публичную политику для бакета sites
+	policy := `{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::` + SitesBucketName + `/*"]}]}`
+	if err := m.mc.SetBucketPolicy(ctx, SitesBucketName, policy); err != nil {
+		return fmt.Errorf("ошибка установки политики бакета sites: %w", err)
 	}
 
 	return nil
