@@ -9,6 +9,7 @@ type Server struct {
 	*asynq.Server
 }
 
+// NewServer - функция для создания нового экземпляра Server с конфигурацией Redis
 func NewServer(cfg config.Redis) *Server {
 	return &Server{
 		asynq.NewServer(asynq.RedisClientOpt{

@@ -5,10 +5,13 @@ import (
 	"github.com/hibiken/asynq"
 )
 
+var QueuClient *Client
+
 type Client struct {
 	*asynq.Client
 }
 
+// NewClient - функция для создания нового экземпляра Client с конфигурацией Redis
 func NewClient(cfg config.Redis) *Client {
 	return &Client{
 		asynq.NewClient(asynq.RedisClientOpt{
