@@ -34,6 +34,20 @@ services:
       timeout: 5s
       retries: 5
 
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+
   minio:
     image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     environment:
@@ -80,3 +94,5 @@ volumes:
   minio-storage:
   redis-data:
   clamav-data:
+  caddy-data:
+  caddy-config:
