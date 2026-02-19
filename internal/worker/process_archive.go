@@ -21,7 +21,7 @@ import (
 type Worker struct {
 	db      *sqlx.DB
 	storage *storage.MinioClient
-	cfg     config.Config // TODO: передавать конфиг для воркера
+	cfg     config.Config
 }
 
 // NewWorker - функция для создания нового экземпляра Worker
@@ -70,6 +70,8 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 		_ = w.updateRequestStatus(payload.RequestId, "Отклонена", "Отсутствует index.html", "")
 		return nil
 	}
+
+	// TODO: добавить скриншот сайта и сохранить его в хранилище, а URL в БД
 
 	// 5. Обновиление статуса заявки в БД и создание URL сайта
 	siteUrl := fmt.Sprintf("http://%s/sites/%d/index.html", w.cfg.Storage.MinioPublicUrl, payload.RequestId)
