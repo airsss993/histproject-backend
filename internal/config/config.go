@@ -21,6 +21,7 @@ type (
 		Port        string
 		SwaggerHost string
 		ClamAVHost  string
+		ChromeUrl   string
 	}
 
 	Database struct {
@@ -64,6 +65,7 @@ func setFromEnv(cfg *Config) error {
 	cfg.App.Port = os.Getenv("SERVER_PORT")
 	cfg.App.SwaggerHost = os.Getenv("SWAGGER_HOST")
 	cfg.App.ClamAVHost = os.Getenv("CLAMAV_HOST")
+	cfg.App.ChromeUrl = os.Getenv("CHROME_URL")
 
 	cfg.Database.DSN = os.Getenv("PG_DSN")
 	cfg.CORS.AllowedOrigins = os.Getenv("CORS_ALLOWED_ORIGINS")

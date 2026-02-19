@@ -16,6 +16,8 @@ services:
         condition: service_healthy
       clamav:
         condition: service_healthy
+      chrome:
+        condition: service_healthy
 
   db:
     image: postgres:18-alpine
@@ -87,6 +89,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 120s
+
+  chrome:
+    image: chromedp/headless-shell:latest
+    ports:
+      - "9222:9222"
+    healthcheck:
+      test: [ "CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/localhost/9222" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
 
 volumes:

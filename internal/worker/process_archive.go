@@ -2,16 +2,20 @@ package worker
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 
 	"github.com/airsss993/histproject-backend/internal/config"
 	"github.com/airsss993/histproject-backend/pkg/storage"
+	"github.com/chromedp/chromedp"
 	"github.com/dutchcoders/go-clamd"
 	"github.com/hibiken/asynq"
 	"github.com/jmoiron/sqlx"
@@ -60,30 +64,94 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 
 	// 3. Проверка архива на вирусы
 	if err := w.checkArchiveForViruses(archive); err != nil {
-		// Если вирус найден, обновить статус заявки на "ошибка" и добавить комментарий администратора
-		_ = w.updateRequestStatus(payload.RequestId, "Отклонена", "Обнаружен вирус", "")
+		_ = w.updateRequestStatus(payload.RequestId, "Отклонена", "Обнаружен вирус", "", "")
 		return nil
 	}
 
 	// 4. Распаковка архива и сохранение файлов в хранилище
 	if err := w.unzipArchive(payload.RequestId, payload.ArchiveId); err != nil {
-		_ = w.updateRequestStatus(payload.RequestId, "Отклонена", "Отсутствует index.html", "")
+		_ = w.updateRequestStatus(payload.RequestId, "Отклонена", "Отсутствует index.html", "", "")
 		return nil
 	}
 
-	// TODO: добавить скриншот сайта и сохранить его в хранилище, а URL в БД
+	// 5. Создание скриншота сайта и сохранение его в хранилище, а URL в БД
+	screenshotUrl, err := w.createScreenshot(payload.RequestId)
+	if err != nil {
+		return fmt.Errorf("ошибка при создании скриншота: %w", err)
+	}
 
-	// 5. Обновиление статуса заявки в БД и создание URL сайта
+	// 6. Обновление статуса заявки в БД и создание URL сайта
 	siteUrl := fmt.Sprintf("http://%s/sites/%d/index.html", w.cfg.Storage.MinioPublicUrl, payload.RequestId)
-	_ = w.updateRequestStatus(payload.RequestId, "На модерации", "", siteUrl)
+	_ = w.updateRequestStatus(payload.RequestId, "На модерации", "", siteUrl, screenshotUrl)
 
 	return nil
 }
+func (w *Worker) createScreenshot(requestID int) (string, error) {
+	// Получаем актуальный WebSocket URL от Chrome
+	chromeAddr := strings.Replace(w.cfg.App.ChromeUrl, "ws://", "", 1)
+	req, err := http.NewRequest("GET", "http://"+chromeAddr+"/json/version", nil)
+	if err != nil {
+		return "", fmt.Errorf("ошибка создания запроса к Chrome: %w", err)
+	}
+	req.Host = "localhost"
+
+	// Выполняем запрос к Chrome для получения WebSocket URL
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return "", fmt.Errorf("ошибка подключения к Chrome: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+
+	// Разбираем JSON-ответ от Chrome для получения webSocketDebuggerUrl
+	var result map[string]string
+	json.Unmarshal(body, &result)
+
+	// Модифицируем webSocketDebuggerUrl, чтобы использовать имя хоста "chrome" и порт 9222
+	parsedWsURL, _ := url.Parse(result["webSocketDebuggerUrl"])
+	parsedWsURL.Host = "chrome:9222"
+	wsURL := parsedWsURL.String()
+
+	// 1. Создание контекста для chromedp
+	allocatorContext, cancel := chromedp.NewRemoteAllocator(
+		context.Background(),
+		wsURL,
+		chromedp.NoModifyURL,
+	)
+	defer cancel()
+
+	// 2. Создание контекста для выполнения задач chromedp
+	ctx, cancel := chromedp.NewContext(allocatorContext)
+	defer cancel()
+
+	var buf []byte
+	siteUrl := fmt.Sprintf("http://%s/sites/%d/index.html", w.cfg.Storage.MinioEndpoint, requestID)
+
+	// 3. Навигация к сайту и создание скриншота
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate(siteUrl),
+		chromedp.FullScreenshot(&buf, 90),
+	); err != nil {
+		return "", fmt.Errorf("ошибка при создании скриншота: %w", err)
+	}
+
+	// 4. Загрузка скриншота в хранилище и получение URL
+	screenshotKey := fmt.Sprintf("%d/screenshot.png", requestID)
+	if err := w.storage.UploadFileSites(bytes.NewReader(buf), int64(len(buf)), screenshotKey); err != nil {
+		return "", fmt.Errorf("ошибка при загрузке скриншота в хранилище: %w", err)
+	}
+
+	// 5. Формирование URL скриншота
+	screenshotUrl := fmt.Sprintf("http://%s/sites/%d/screenshot.png", w.cfg.Storage.MinioPublicUrl, requestID)
+
+	return screenshotUrl, nil
+}
 
 // updateRequestStatus - функция для обновления статуса заявки и комментария администратора
-func (w *Worker) updateRequestStatus(requestID int, status, comment, siteUrl string) error {
-	query := `UPDATE requests SET status = $1, admin_comment = $2, site_url = $3 WHERE id = $4`
-	_, err := w.db.Exec(query, status, comment, siteUrl, requestID)
+func (w *Worker) updateRequestStatus(requestID int, status, comment, siteUrl, screenshorUrl string) error {
+	query := `UPDATE requests SET status = $1, admin_comment = $2, site_url = $3, screenshot_url = $4 WHERE id = $5`
+	_, err := w.db.Exec(query, status, comment, siteUrl, screenshorUrl, requestID)
 	if err != nil {
 		return fmt.Errorf("ошибка при обновлении статуса заявки: %w", err)
 	}
