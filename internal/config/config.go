@@ -20,6 +20,7 @@ type (
 	App struct {
 		Port        string
 		SwaggerHost string
+		ClamAVHost  string
 	}
 
 	Database struct {
@@ -31,6 +32,7 @@ type (
 		MinioPassword   string
 		MinioEndpoint   string
 		MinioBucketName string
+		MinioPublicUrl  string
 	}
 
 	Redis struct {
@@ -61,6 +63,7 @@ func Init() (*Config, error) {
 func setFromEnv(cfg *Config) error {
 	cfg.App.Port = os.Getenv("SERVER_PORT")
 	cfg.App.SwaggerHost = os.Getenv("SWAGGER_HOST")
+	cfg.App.ClamAVHost = os.Getenv("CLAMAV_HOST")
 
 	cfg.Database.DSN = os.Getenv("PG_DSN")
 	cfg.CORS.AllowedOrigins = os.Getenv("CORS_ALLOWED_ORIGINS")
@@ -69,6 +72,7 @@ func setFromEnv(cfg *Config) error {
 	cfg.Storage.MinioUsername = os.Getenv("MINIO_ROOT_USER")
 	cfg.Storage.MinioPassword = os.Getenv("MINIO_ROOT_PASSWORD")
 	cfg.Storage.MinioBucketName = os.Getenv("MINIO_BUCKET_NAME")
+	cfg.Storage.MinioPublicUrl = os.Getenv("MINIO_PUBLIC_URL")
 
 	cfg.Redis.RedisPassword = os.Getenv("REDIS_PASSWORD")
 	cfg.Redis.RedisAddress = os.Getenv("REDIS_ADDRESS")
@@ -80,6 +84,10 @@ func setFromEnv(cfg *Config) error {
 	if cfg.App.SwaggerHost == "" {
 		return errors.New("SWAGGER_HOST должно быть указано")
 	}
+	if cfg.App.ClamAVHost == "" {
+		return errors.New("CLAMAV_HOST должно быть указано")
+	}
+
 	if cfg.Database.DSN == "" {
 		return errors.New("PG_DSN должно быть указано")
 	}

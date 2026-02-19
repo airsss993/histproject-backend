@@ -108,7 +108,7 @@ func CreateRequest(c *gin.Context) {
 	}
 
 	// Добавляем задачу в очередь
-	taskInfo, _ := queue.QueuClient.Enqueue(task)
+	_, _ = queue.QueuClient.Enqueue(task)
 
 	// Отправляем успешный ответ
 	c.JSON(http.StatusCreated, gin.H{
