@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 
 -- Таблица заявок
-CREATE TYPE request_status AS ENUM ('Новая', 'На модерации', 'Отклонена', 'Опубликована');
+CREATE TYPE request_status AS ENUM ('Новая', 'В обработке', 'На модерации', 'Отклонена', 'Опубликована');
 
 CREATE TABLE requests
 (
@@ -11,7 +11,7 @@ CREATE TABLE requests
     description       TEXT           NOT NULL,                             -- Описание объекта
     event_date        DATE           NOT NULL,                             -- Дата исторического события
     event_type_id     INTEGER        NOT NULL REFERENCES event_types (id), -- ID типа события
-    email             VARCHAR(70)   NOT NULL,                             -- Почта пользователя, который отправил заявку
+    email             VARCHAR(70)    NOT NULL,                             -- Почта пользователя, который отправил заявку
     telegram_username VARCHAR(100)   NOT NULL,                             -- Имя пользователя в Telegram, который отправил заявку
     archive_id        VARCHAR(200)   NOT NULL,                             -- ID архива с сайтом в бакете
     site_url          VARCHAR(200),                                        -- URL развернутого сайта для просмотра

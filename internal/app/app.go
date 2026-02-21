@@ -11,8 +11,10 @@ import (
 	"github.com/airsss993/histproject-backend/internal/config"
 	"github.com/airsss993/histproject-backend/internal/router"
 	"github.com/airsss993/histproject-backend/internal/server"
+	"github.com/airsss993/histproject-backend/internal/worker"
 	"github.com/airsss993/histproject-backend/migrations"
 	"github.com/airsss993/histproject-backend/pkg/db"
+	"github.com/airsss993/histproject-backend/pkg/queue"
 	"github.com/airsss993/histproject-backend/pkg/storage"
 )
 
@@ -32,6 +34,13 @@ func Run() {
 	}
 	// Устанавливаем глобальный экземпляр MinIO клиента
 	storage.Client = minioClient
+
+	queue.QueuClient = queue.NewClient(cfg.Redis)
+	queueServer := queue.NewServer(cfg.Redis)
+
+	w := worker.NewWorker(conn, minioClient, *cfg)
+	mux := worker.NewMux(w)
+	go queueServer.Run(mux)
 
 	// Выполняем миграции
 	if err := migrations.Run(conn.DB); err != nil {

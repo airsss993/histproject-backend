@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/airsss993/histproject-backend/internal/worker"
 	"github.com/airsss993/histproject-backend/pkg/db"
+	"github.com/airsss993/histproject-backend/pkg/queue"
 	"github.com/airsss993/histproject-backend/pkg/storage"
 	"github.com/gin-gonic/gin"
 )
@@ -87,13 +89,26 @@ func CreateRequest(c *gin.Context) {
 		ArchiveId:        archiveId,
 	}
 
-	// Сохраняем новую заявку в БД
-	if err := createRequestSQL(requestData); err != nil {
+	// Сохраняем новую заявку в БД и получаем её ID
+	requestId, err := createRequestSQL(requestData)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Ошибка создания заявки: " + err.Error(),
 		})
 		return
 	}
+
+	// Создаем задачу для обработки архива
+	task, err := worker.NewProcessArchiveTask(requestId, requestData.ArchiveId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Ошибка создания задачи для обработки архива: " + err.Error(),
+		})
+		return
+	}
+
+	// Добавляем задачу в очередь
+	_, _ = queue.QueuClient.Enqueue(task)
 
 	// Отправляем успешный ответ
 	c.JSON(http.StatusCreated, gin.H{
@@ -102,7 +117,9 @@ func CreateRequest(c *gin.Context) {
 }
 
 // createRequestSQL - функция для получения информации об одном объекте из БД по его ID.
-func createRequestSQL(data RequestData) error {
+func createRequestSQL(data RequestData) (int, error) {
+	var id int
+
 	query := `
 		INSERT INTO requests 
 			(title,
@@ -115,12 +132,13 @@ func createRequestSQL(data RequestData) error {
 		    event_date,
 		    event_type_id)
 		VALUES
-		    ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+		    ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id`
 
-	_, err := db.DB.Exec(query, data.Title, data.Description, data.Email, data.TelegramUsername, data.ArchiveId, data.SiteURL, data.ScreenshotURL, data.EventDate, data.EventTypeId)
+	err := db.DB.QueryRow(query, data.Title, data.Description, data.Email, data.TelegramUsername, data.ArchiveId, data.SiteURL, data.ScreenshotURL, data.EventDate, data.EventTypeId).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("ошибка вставки новой записи о заявке в БД: %w", err)
+		return 0, fmt.Errorf("ошибка вставки новой записи о заявке в БД: %w", err)
 	}
 
-	return nil
+	return id, nil
 }
