@@ -14,8 +14,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      clamav:
-        condition: service_healthy
+      # clamav:
+      #   condition: service_healthy
       chrome:
         condition: service_healthy
 
@@ -45,6 +45,7 @@ services:
       - "443:443/udp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./public:/srv/public
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
@@ -77,18 +78,24 @@ services:
     volumes:
       - redis-data:/data
 
-  clamav:
-    image: clamav/clamav-debian:stable
-    ports:
-      - "3310:3310"
-    volumes:
-      - clamav-data:/var/lib/clamav
-    healthcheck:
-      test: [ "CMD", "clamdcheck.sh" ]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
+  # clamav:
+  #   image: clamav/clamav-debian:stable
+  #   ports:
+  #     - "3310:3310"
+  #   volumes:
+  #     - clamav-data:/var/lib/clamav
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 2g
+  #       reservations:
+  #         memory: 1g
+  #   healthcheck:
+  #     test: [ "CMD", "clamdcheck.sh" ]
+  #     interval: 60s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 300s
 
   chrome:
     image: chromedp/headless-shell:latest
@@ -105,6 +112,6 @@ volumes:
   db-data:
   minio-storage:
   redis-data:
-  clamav-data:
+  # clamav-data:
   caddy-data:
   caddy-config:

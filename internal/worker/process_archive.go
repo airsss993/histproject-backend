@@ -62,10 +62,12 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 		return fmt.Errorf("ошибка при получении архива из хранилища: %w", err)
 	}
 
-	// 3. Проверка архива на вирусы
-	if err := w.checkArchiveForViruses(archive); err != nil {
-		_ = w.updateRequestStatus(payload.RequestId, "Отклонена", "Обнаружен вирус", "", "")
-		return nil
+	// 3. Проверка архива на вирусы (только если ClamAV включён)
+	if w.cfg.App.ClamAVEnabled {
+		if err := w.checkArchiveForViruses(archive); err != nil {
+			_ = w.updateRequestStatus(payload.RequestId, "Отклонена", "Обнаружен вирус", "", "")
+			return nil
+		}
 	}
 
 	// 4. Распаковка архива и сохранение файлов в хранилище

@@ -18,10 +18,11 @@ type (
 		Redis    Redis
 	}
 	App struct {
-		Port        string
-		SwaggerHost string
-		ClamAVHost  string
-		ChromeUrl   string
+		Port           string
+		SwaggerHost    string
+		ClamAVEnabled  bool
+		ClamAVHost     string
+		ChromeUrl      string
 	}
 
 	Database struct {
@@ -64,6 +65,7 @@ func Init() (*Config, error) {
 func setFromEnv(cfg *Config) error {
 	cfg.App.Port = os.Getenv("SERVER_PORT")
 	cfg.App.SwaggerHost = os.Getenv("SWAGGER_HOST")
+	cfg.App.ClamAVEnabled = os.Getenv("CLAMAV_ENABLED") == "true"
 	cfg.App.ClamAVHost = os.Getenv("CLAMAV_HOST")
 	cfg.App.ChromeUrl = os.Getenv("CHROME_URL")
 
@@ -86,8 +88,8 @@ func setFromEnv(cfg *Config) error {
 	if cfg.App.SwaggerHost == "" {
 		return errors.New("SWAGGER_HOST должно быть указано")
 	}
-	if cfg.App.ClamAVHost == "" {
-		return errors.New("CLAMAV_HOST должно быть указано")
+	if cfg.App.ClamAVEnabled && cfg.App.ClamAVHost == "" {
+		return errors.New("CLAMAV_HOST должно быть указано если CLAMAV_ENABLED=true")
 	}
 
 	if cfg.Database.DSN == "" {
