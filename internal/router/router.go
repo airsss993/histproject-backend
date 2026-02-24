@@ -12,42 +12,36 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-func New(cfg *config.Config) *gin.Engine {
+// Handlers — все HTTP-хендлеры приложения (по фичам). Добавляйте новые поля при появлении фич.
+type Handlers struct {
+	Objects  *objects.Handler
+	Requests *requests.Handler
+}
+
+func New(cfg *config.Config, h Handlers) *gin.Engine {
 	r := gin.Default()
 	r.Use(corsMiddleware(cfg.CORS.AllowedOrigins))
 
-	InitRoutes(r, cfg.App.SwaggerHost)
+	InitRoutes(r, cfg.App.SwaggerHost, h)
 
 	return r
 }
 
-func InitRoutes(r *gin.Engine, swaggerHost string) {
+func InitRoutes(r *gin.Engine, swaggerHost string, h Handlers) {
 	docs.SwaggerInfo.Host = swaggerHost
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
-	// Публичные роуты, не требующие проверки авторизации
 	public := r.Group("/api")
 	{
-		// Тестовый эндпоинт для проверки работы сервера
 		public.GET("/ping", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"message": "pong",
-			})
+			c.JSON(http.StatusOK, gin.H{"message": "pong"})
 		})
 
-		// ---------- ОБЪЕКТЫ И ТИПЫ СОБЫТИЙ ----------
+		public.GET("objects/get-object-data/:id", h.Objects.GetObjectData)
+		public.POST("objects/get-objects-list", h.Objects.GetObjectsList)
+		public.GET("objects/get-event-types-list", h.Objects.GetEventTypesList)
 
-		// Эндпоинт для получения информации об одном объекте
-		public.GET("objects/get-object-data/:id", objects.GetObjectData)
-		// Эндпоинт для получения всех объектов с их информацией
-		public.POST("objects/get-objects-list", objects.GetObjectsList)
-		// Эндпоинт для получения всех типов событий с их информацией
-		public.GET("objects/get-event-types-list", objects.GetEventTypesList)
-
-		// ---------- ПОЛЬЗОВАТЕЛЬСКИЕ ЗАЯВКИ ----------
-
-		// Эндпоинт для создания заявки от пользователя
-		public.POST("requests/create-request", requests.CreateRequest)
+		public.POST("requests/create-request", h.Requests.CreateRequest)
 	}
 }
 

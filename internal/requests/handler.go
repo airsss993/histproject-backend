@@ -1,0 +1,66 @@
+package requests
+
+import (
+	"errors"
+	"mime/multipart"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+// Handler — HTTP-обработчики заявок.
+type Handler struct {
+	svc *Service
+}
+
+// NewHandler создаёт handler заявок.
+func NewHandler(svc *Service) *Handler {
+	return &Handler{svc: svc}
+}
+
+// CreateRequestReq — форма создания заявки.
+type CreateRequestReq struct {
+	Title            string                `form:"title" binding:"required,max=200"`
+	Description      string                `form:"description" binding:"required"`
+	EventDate        string                `form:"eventDate" binding:"required,datetime=2006-01-02"`
+	EventTypeId      int                   `form:"eventTypeId" binding:"required,gt=0"`
+	Email            string                `form:"email" binding:"required,email,max=70"`
+	TelegramUsername string                `form:"telegramUsername" binding:"required"`
+	Archive          *multipart.FileHeader `form:"archive" binding:"required"`
+}
+
+// CreateRequest создаёт заявку от пользователя.
+func (h *Handler) CreateRequest(c *gin.Context) {
+	var req CreateRequestReq
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка парсинга формы: " + err.Error()})
+		return
+	}
+
+	input := CreateRequestInput{
+		Title:            req.Title,
+		Description:      req.Description,
+		EventDate:        req.EventDate,
+		EventTypeId:      req.EventTypeId,
+		Email:            req.Email,
+		TelegramUsername: req.TelegramUsername,
+		Archive:          req.Archive,
+	}
+
+	err := h.svc.CreateRequest(c.Request.Context(), input)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrArchiveMustBeZip):
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Архив должен иметь расширение zip"})
+			return
+		case errors.Is(err, ErrArchiveTooLarge):
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Файл должен быть не больше 50 МБ"})
+			return
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Ошибка создания заявки: " + err.Error()})
+			return
+		}
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "success"})
+}
