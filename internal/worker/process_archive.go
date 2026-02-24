@@ -14,26 +14,26 @@ import (
 	"strings"
 
 	"github.com/airsss993/histproject-backend/internal/config"
+	"github.com/airsss993/histproject-backend/internal/requests"
 	"github.com/airsss993/histproject-backend/pkg/storage"
 	"github.com/chromedp/chromedp"
 	"github.com/dutchcoders/go-clamd"
 	"github.com/hibiken/asynq"
-	"github.com/jmoiron/sqlx"
 )
 
-// Worker - структура для обработки задач в фоновом режиме
+// Worker — обработка фоновых задач (архивы заявок).
 type Worker struct {
-	db      *sqlx.DB
-	storage *storage.MinioClient
-	cfg     config.Config
+	requestRepo requests.RequestRepository
+	storage     *storage.MinioClient
+	cfg         config.Config
 }
 
-// NewWorker - функция для создания нового экземпляра Worker
-func NewWorker(db *sqlx.DB, storage *storage.MinioClient, cfg config.Config) *Worker {
+// NewWorker создаёт Worker с репозиторием заявок и хранилищем.
+func NewWorker(requestRepo requests.RequestRepository, storage *storage.MinioClient, cfg config.Config) *Worker {
 	return &Worker{
-		db:      db,
-		storage: storage,
-		cfg:     cfg,
+		requestRepo: requestRepo,
+		storage:     storage,
+		cfg:         cfg,
 	}
 }
 
@@ -62,29 +62,25 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 		return fmt.Errorf("ошибка при получении архива из хранилища: %w", err)
 	}
 
-	// 3. Проверка архива на вирусы (только если ClamAV включён)
 	if w.cfg.App.ClamAVEnabled {
 		if err := w.checkArchiveForViruses(archive); err != nil {
-			_ = w.updateRequestStatus(payload.RequestId, "Отклонена", "Обнаружен вирус", "", "")
+			_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Отклонена", "Обнаружен вирус", "", "")
 			return nil
 		}
 	}
 
-	// 4. Распаковка архива и сохранение файлов в хранилище
 	if err := w.unzipArchive(payload.RequestId, payload.ArchiveId); err != nil {
-		_ = w.updateRequestStatus(payload.RequestId, "Отклонена", "Отсутствует index.html", "", "")
+		_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Отклонена", "Отсутствует index.html", "", "")
 		return nil
 	}
 
-	// 5. Создание скриншота сайта и сохранение его в хранилище, а URL в БД
 	screenshotUrl, err := w.createScreenshot(payload.RequestId)
 	if err != nil {
 		return fmt.Errorf("ошибка при создании скриншота: %w", err)
 	}
 
-	// 6. Обновление статуса заявки в БД и создание URL сайта
 	siteUrl := fmt.Sprintf("http://%s/sites/%d/index.html", w.cfg.Storage.MinioPublicUrl, payload.RequestId)
-	_ = w.updateRequestStatus(payload.RequestId, "На модерации", "", siteUrl, screenshotUrl)
+	_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "На модерации", "", siteUrl, screenshotUrl)
 
 	return nil
 }
@@ -148,16 +144,6 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 	screenshotUrl := fmt.Sprintf("http://%s/sites/%d/screenshot.png", w.cfg.Storage.MinioPublicUrl, requestID)
 
 	return screenshotUrl, nil
-}
-
-// updateRequestStatus - функция для обновления статуса заявки и комментария администратора
-func (w *Worker) updateRequestStatus(requestID int, status, comment, siteUrl, screenshorUrl string) error {
-	query := `UPDATE requests SET status = $1, admin_comment = $2, site_url = $3, screenshot_url = $4 WHERE id = $5`
-	_, err := w.db.Exec(query, status, comment, siteUrl, screenshorUrl, requestID)
-	if err != nil {
-		return fmt.Errorf("ошибка при обновлении статуса заявки: %w", err)
-	}
-	return nil
 }
 
 // unzipArchive - функция для распаковки архива и загрузки файлов в хранилище
