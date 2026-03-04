@@ -18,9 +18,8 @@ type (
 		Redis    Redis
 	}
 	App struct {
-		Port           string
-		SwaggerHost    string
-		ClamAVEnabled  bool
+		Port          string
+		ClamAVEnabled bool
 		ClamAVHost     string
 		ChromeUrl      string
 	}
@@ -64,7 +63,6 @@ func Init() (*Config, error) {
 // setFromEnv заполняет структуру конфигурации значениями из переменных окружения и валидирует их наличие.
 func setFromEnv(cfg *Config) error {
 	cfg.App.Port = os.Getenv("SERVER_PORT")
-	cfg.App.SwaggerHost = os.Getenv("SWAGGER_HOST")
 	cfg.App.ClamAVEnabled = os.Getenv("CLAMAV_ENABLED") == "true"
 	cfg.App.ClamAVHost = os.Getenv("CLAMAV_HOST")
 	cfg.App.ChromeUrl = os.Getenv("CHROME_URL")
@@ -84,9 +82,6 @@ func setFromEnv(cfg *Config) error {
 
 	if cfg.App.Port == "" {
 		return errors.New("SERVER_PORT должно быть указано")
-	}
-	if cfg.App.SwaggerHost == "" {
-		return errors.New("SWAGGER_HOST должно быть указано")
 	}
 	if cfg.App.ClamAVEnabled && cfg.App.ClamAVHost == "" {
 		return errors.New("CLAMAV_HOST должно быть указано если CLAMAV_ENABLED=true")

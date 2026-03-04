@@ -3,16 +3,13 @@ package router
 import (
 	"net/http"
 
-	"github.com/airsss993/histproject-backend/docs"
 	"github.com/airsss993/histproject-backend/internal/config"
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/airsss993/histproject-backend/internal/requests"
 	"github.com/gin-gonic/gin"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// Handlers — все HTTP-хендлеры приложения (по фичам). Добавляйте новые поля при появлении фич.
+// Handlers — все HTTP-хендлеры приложения.
 type Handlers struct {
 	Objects  *objects.Handler
 	Requests *requests.Handler
@@ -22,15 +19,12 @@ func New(cfg *config.Config, h Handlers) *gin.Engine {
 	r := gin.Default()
 	r.Use(corsMiddleware(cfg.CORS.AllowedOrigins))
 
-	InitRoutes(r, cfg.App.SwaggerHost, h)
+	InitRoutes(r, h)
 
 	return r
 }
 
-func InitRoutes(r *gin.Engine, swaggerHost string, h Handlers) {
-	docs.SwaggerInfo.Host = swaggerHost
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
-
+func InitRoutes(r *gin.Engine, h Handlers) {
 	public := r.Group("/api")
 	{
 		public.GET("/ping", func(c *gin.Context) {
