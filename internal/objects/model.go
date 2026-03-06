@@ -6,7 +6,6 @@ type SingleObjectInfo struct {
 	Title           string `db:"title" json:"title"`
 	Description     string `db:"description" json:"description"`
 	EventDate       string `db:"event_date" json:"eventDate"`
-	EventTypeID     int    `db:"event_type_id" json:"eventType"`
 	PreviewUrlImage string `db:"preview_image_url" json:"previewUrlImage"`
 }
 
