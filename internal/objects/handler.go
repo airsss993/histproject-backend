@@ -28,14 +28,6 @@ type GetObjectDataResp struct {
 }
 
 // GetObjectData возвращает данные одного объекта по ID.
-// @Summary		Получение данных для конкретного объекта
-// @Description	Метод для получения данных о конкретном объекте (метки на карте)
-// @Tags		Объекты
-// @Produce		json
-// @Param		id	path		int	true	"ID получаемого объекта (метки на карте)"
-// @Success		200	{object}	map[string]ObjectInfo
-// @Failure		400	{object}	map[string]string
-// @Router		/objects/get-object-data/{id} [get]
 func (h *Handler) GetObjectData(c *gin.Context) {
 	objectIdParam := c.Param("id")
 	objectId, err := strconv.Atoi(objectIdParam)
@@ -66,15 +58,6 @@ type GetObjectsListResp struct {
 }
 
 // GetObjectsList возвращает список объектов с фильтрами.
-// @Summary		Получение списка объектов
-// @Description	Метод для получения списка объектов с возможностью фильтрации по типам событий и датам
-// @Tags		Объекты
-// @Accept		json
-// @Produce		json
-// @Param		request	body	GetObjectsListReq	false	"Параметры фильтрации (опционально)"
-// @Success		200	{object}	GetObjectsListResp
-// @Failure		400	{object}	map[string]string
-// @Router		/objects/get-objects-list [post]
 func (h *Handler) GetObjectsList(c *gin.Context) {
 	var req GetObjectsListReq
 	if c.Request.ContentLength > 0 {
@@ -99,13 +82,6 @@ type GetEventTypesListResp struct {
 }
 
 // GetEventTypesList возвращает список типов событий.
-// @Summary		Получение списка типов событий
-// @Description	Метод для получения списка типов событий
-// @Tags		Объекты
-// @Produce		json
-// @Success		200	{object}	GetEventTypesListResp
-// @Failure		400	{object}	map[string]string
-// @Router		/objects/get-event-types-list [get]
 func (h *Handler) GetEventTypesList(c *gin.Context) {
 	list, err := h.svc.GetEventTypesList(c.Request.Context())
 	if err != nil {
