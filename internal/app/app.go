@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/airsss993/histproject-backend/internal/admin"
 	"github.com/airsss993/histproject-backend/internal/config"
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/airsss993/histproject-backend/internal/requests"
@@ -54,10 +55,21 @@ func Run() {
 	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask)
 	requestsHandler := requests.NewHandler(requestsSvc)
 
+	// Инициализация модуля admin
+	adminRepo := admin.NewRepository(conn)
+	adminSvc := admin.NewService(adminRepo, cfg.Auth.JWTSecret)
+	adminHandler := admin.NewHandler(adminSvc)
+
+	// Автосоздание super_admin при первом запуске
+	if err := adminSvc.SeedSuperAdmin(context.Background()); err != nil {
+		log.Fatal("Ошибка создания super_admin: ", err)
+	}
+
 	r := router.New(cfg, router.Handlers{
 		Objects:  objectsHandler,
 		Requests: requestsHandler,
-	})
+		Admin:    adminHandler,
+	}, adminSvc)
 
 	srv := server.New(cfg.App.Port, r)
 	srv.Start()
