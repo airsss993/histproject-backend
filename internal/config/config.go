@@ -12,6 +12,7 @@ import (
 type (
 	Config struct {
 		App      App
+		Auth     Auth
 		Database Database
 		CORS     CORS
 		Storage  Storage
@@ -20,8 +21,11 @@ type (
 	App struct {
 		Port          string
 		ClamAVEnabled bool
-		ClamAVHost     string
-		ChromeUrl      string
+		ClamAVHost    string
+		ChromeUrl     string
+	}
+	Auth struct {
+		JWTSecret string
 	}
 
 	Database struct {
@@ -67,6 +71,8 @@ func setFromEnv(cfg *Config) error {
 	cfg.App.ClamAVHost = os.Getenv("CLAMAV_HOST")
 	cfg.App.ChromeUrl = os.Getenv("CHROME_URL")
 
+	cfg.Auth.JWTSecret = os.Getenv("JWT_SECRET")
+
 	cfg.Database.DSN = os.Getenv("PG_DSN")
 	cfg.CORS.AllowedOrigins = os.Getenv("CORS_ALLOWED_ORIGINS")
 
@@ -82,6 +88,9 @@ func setFromEnv(cfg *Config) error {
 
 	if cfg.App.Port == "" {
 		return errors.New("SERVER_PORT должно быть указано")
+	}
+	if cfg.Auth.JWTSecret == "" {
+		return errors.New("JWT_SECRET должно быть указано")
 	}
 	if cfg.App.ClamAVEnabled && cfg.App.ClamAVHost == "" {
 		return errors.New("CLAMAV_HOST должно быть указано если CLAMAV_ENABLED=true")

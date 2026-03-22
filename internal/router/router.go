@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 
+	"github.com/airsss993/histproject-backend/internal/admin"
 	"github.com/airsss993/histproject-backend/internal/config"
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/airsss993/histproject-backend/internal/requests"
@@ -13,18 +14,19 @@ import (
 type Handlers struct {
 	Objects  *objects.Handler
 	Requests *requests.Handler
+	Admin    *admin.Handler
 }
 
-func New(cfg *config.Config, h Handlers) *gin.Engine {
+func New(cfg *config.Config, h Handlers, adminSvc *admin.Service) *gin.Engine {
 	r := gin.Default()
 	r.Use(corsMiddleware(cfg.CORS.AllowedOrigins))
 
-	InitRoutes(r, h)
+	InitRoutes(r, h, adminSvc)
 
 	return r
 }
 
-func InitRoutes(r *gin.Engine, h Handlers) {
+func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 	public := r.Group("/api")
 	{
 		public.GET("/ping", func(c *gin.Context) {
@@ -36,6 +38,20 @@ func InitRoutes(r *gin.Engine, h Handlers) {
 		public.GET("objects/get-event-types-list", h.Objects.GetEventTypesList)
 
 		public.POST("requests/create-request", h.Requests.CreateRequest)
+
+		// Публичные эндпоинты авторизации админов
+		public.POST("admin/login", h.Admin.Login)
+		public.POST("admin/refresh", h.Admin.Refresh)
+	}
+
+	// Защищённые эндпоинты админ-панели
+	adminGroup := r.Group("/api/admin")
+	adminGroup.Use(admin.JWTMiddleware(adminSvc))
+	{
+		adminGroup.GET("/ping", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{"message": "pong", "adminId": c.GetInt("adminId"), "role": c.GetString("role")})
+		})
+		adminGroup.POST("/logout", h.Admin.Logout)
 	}
 }
 
