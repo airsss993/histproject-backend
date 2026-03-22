@@ -27,7 +27,7 @@ func NewRepository(db *sqlx.DB) Repository {
 func (r *repository) GetByID(ctx context.Context, id int) (*SingleObjectInfo, error) {
 	var obj SingleObjectInfo
 	query := `
-		SELECT id, title, description, event_date, preview_image_url
+		SELECT id, title, description, event_date, preview_image_url, site_url
 		FROM objects WHERE id = $1`
 	err := r.db.GetContext(ctx, &obj, query, id)
 	if err != nil {

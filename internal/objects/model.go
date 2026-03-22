@@ -7,6 +7,7 @@ type SingleObjectInfo struct {
 	Description     string `db:"description" json:"description"`
 	EventDate       string `db:"event_date" json:"eventDate"`
 	PreviewUrlImage string `db:"preview_image_url" json:"previewUrlImage"`
+	SiteUrl         string `db:"site_url" json:"siteUrl"`
 }
 
 // ObjectInfo — объект в списке с координатами.
