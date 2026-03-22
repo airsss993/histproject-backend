@@ -13,6 +13,9 @@ CREATE TABLE admins
     created_at    TIMESTAMP    NOT NULL DEFAULT NOW()        -- Дата создания записи
 );
 
+-- Гарантирует единственность super_admin на уровне БД
+CREATE UNIQUE INDEX unique_super_admin ON admins ((true)) WHERE role = 'super_admin';
+
 -- +goose Down
 DROP TABLE IF EXISTS admins;
 DROP TYPE IF EXISTS admin_role;

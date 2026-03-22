@@ -12,7 +12,7 @@ import (
 type Repository interface {
 	GetByLogin(ctx context.Context, login string) (*Admin, error)
 	GetByID(ctx context.Context, id int) (*Admin, error)
-	Create(ctx context.Context, login, passwordHash, role string) error
+	Create(ctx context.Context, login, passwordHash, role string) (bool, error)
 	HasSuperAdmin(ctx context.Context) (bool, error)
 
 	CreateSession(ctx context.Context, adminID int, refreshToken string, expiresAt time.Time) error
@@ -51,14 +51,15 @@ func (r *repository) GetByID(ctx context.Context, id int) (*Admin, error) {
 	return &a, nil
 }
 
-// Create создаёт нового администратора.
-func (r *repository) Create(ctx context.Context, login, passwordHash, role string) error {
-	query := `INSERT INTO admins (login, password_hash, role) VALUES ($1, $2, $3)`
-	_, err := r.db.ExecContext(ctx, query, login, passwordHash, role)
+// Create создаёт нового администратора. Возвращает false, если запись не была вставлена (конфликт).
+func (r *repository) Create(ctx context.Context, login, passwordHash, role string) (bool, error) {
+	query := `INSERT INTO admins (login, password_hash, role) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
+	res, err := r.db.ExecContext(ctx, query, login, passwordHash, role)
 	if err != nil {
-		return fmt.Errorf("ошибка создания админа: %w", err)
+		return false, fmt.Errorf("ошибка создания админа: %w", err)
 	}
-	return nil
+	rows, _ := res.RowsAffected()
+	return rows > 0, nil
 }
 
 // HasSuperAdmin проверяет, существует ли super_admin в БД.

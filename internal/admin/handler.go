@@ -65,10 +65,10 @@ func (h *Handler) Logout(c *gin.Context) {
 
 func setTokenCookies(c *gin.Context, tokens *TokenResponse) {
 	c.SetCookie("access_token", tokens.AccessToken, 15*60, "/", "", false, true)
-	c.SetCookie("refresh_token", tokens.RefreshToken, 7*24*60*60, "/api/admin/refresh", "", false, true)
+	c.SetCookie("refresh_token", tokens.RefreshToken, 7*24*60*60, "/api/admin/", "", false, true)
 }
 
 func clearTokenCookies(c *gin.Context) {
 	c.SetCookie("access_token", "", -1, "/", "", false, true)
-	c.SetCookie("refresh_token", "", -1, "/api/admin/refresh", "", false, true)
+	c.SetCookie("refresh_token", "", -1, "/api/admin/", "", false, true)
 }

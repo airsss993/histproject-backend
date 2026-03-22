@@ -92,8 +92,12 @@ func (s *Service) SeedSuperAdmin(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("ошибка генерации логина: %w", err)
 	}
-	if err := s.repo.Create(ctx, login, string(hash), "super_admin"); err != nil {
+	inserted, err := s.repo.Create(ctx, login, string(hash), "super_admin")
+	if err != nil {
 		return err
+	}
+	if !inserted {
+		return nil
 	}
 
 	log.Printf("\n========================================\n  SUPER ADMIN СОЗДАН\n  Логин:  %s\n  Пароль: %s\n========================================", login, password)
