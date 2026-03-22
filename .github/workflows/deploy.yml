@@ -31,16 +31,16 @@ jobs:
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}
             
             echo "🛑 Остановка контейнеров..."
-            docker-compose down
+            docker compose down
             
             echo "🚀 Запуск новых контейнеров..."
-            docker-compose up -d
+            docker compose up -d
             
             echo "🧹 Удаление неиспользуемые образы..."
             docker image prune -f
             
             echo "✅ Деплой успешен!"
-            docker-compose ps
+            docker compose ps
 
       - name: Notify success
         if: success()
