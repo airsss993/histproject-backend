@@ -3,7 +3,6 @@ package admin
 import (
 	"context"
 	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -200,11 +199,15 @@ func (s *Service) parseToken(tokenString string) (jwt.MapClaims, error) {
 
 // generateRandomPassword генерирует случайный пароль заданной длины.
 func generateRandomPassword(length int) (string, error) {
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
+	raw := make([]byte, length)
+	if _, err := rand.Read(raw); err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(bytes)[:length], nil
+	for i := range raw {
+		raw[i] = charset[int(raw[i])%len(charset)]
+	}
+	return string(raw), nil
 }
 
 // generateAdminLogin генерирует логин вида admin_XxXxXx из 8 случайных букв.
