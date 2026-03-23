@@ -2,6 +2,7 @@ package admin
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -66,6 +67,41 @@ func (h *Handler) Logout(c *gin.Context) {
 func setTokenCookies(c *gin.Context, tokens *TokenResponse) {
 	c.SetCookie("access_token", tokens.AccessToken, 15*60, "/", "", false, true)
 	c.SetCookie("refresh_token", tokens.RefreshToken, 7*24*60*60, "/api/admin/", "", false, true)
+}
+
+// CreateAdmin создаёт нового администратора и возвращает сгенерированные login/password.
+func (h *Handler) CreateAdmin(c *gin.Context) {
+	var req CreateAdminRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка валидации: " + err.Error()})
+		return
+	}
+
+	resp, err := h.svc.CreateAdmin(c.Request.Context(), req.Role)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, resp)
+}
+
+// DeleteAdmin удаляет администратора по ID.
+func (h *Handler) DeleteAdmin(c *gin.Context) {
+	targetID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID"})
+		return
+	}
+
+	callerID := c.GetInt("adminId")
+
+	if err := h.svc.DeleteAdmin(c.Request.Context(), callerID, targetID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Админ удалён"})
 }
 
 func clearTokenCookies(c *gin.Context) {
