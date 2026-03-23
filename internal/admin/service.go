@@ -3,7 +3,6 @@ package admin
 import (
 	"context"
 	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -105,6 +104,43 @@ func (s *Service) SeedSuperAdmin(ctx context.Context) error {
 	return nil
 }
 
+// CreateAdmin создаёт нового администратора, генерирует login и password.
+func (s *Service) CreateAdmin(ctx context.Context, role string) (*CreateAdminResponse, error) {
+	login, err := generateAdminLogin()
+	if err != nil {
+		return nil, fmt.Errorf("ошибка генерации логина: %w", err)
+	}
+
+	password, err := generateRandomPassword(16)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка генерации пароля: %w", err)
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка хеширования пароля: %w", err)
+	}
+
+	inserted, err := s.repo.Create(ctx, login, string(hash), role)
+	if err != nil {
+		return nil, err
+	}
+	if !inserted {
+		return nil, errors.New("ошибка создания админа")
+	}
+
+	return &CreateAdminResponse{Login: login, Password: password}, nil
+}
+
+// DeleteAdmin удаляет администратора по ID. Нельзя удалить самого себя.
+func (s *Service) DeleteAdmin(ctx context.Context, callerID, targetID int) error {
+	if callerID == targetID {
+		return errors.New("нельзя удалить самого себя")
+	}
+
+	return s.repo.Delete(ctx, targetID)
+}
+
 // generateTokenPair генерирует access-токен и случайный refresh-токен, сохраняя сессию в БД.
 func (s *Service) generateTokenPair(ctx context.Context, adminID int, role string) (*TokenResponse, error) {
 	accessToken, err := s.createAccessToken(adminID, role)
@@ -163,11 +199,15 @@ func (s *Service) parseToken(tokenString string) (jwt.MapClaims, error) {
 
 // generateRandomPassword генерирует случайный пароль заданной длины.
 func generateRandomPassword(length int) (string, error) {
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*"
+	raw := make([]byte, length)
+	if _, err := rand.Read(raw); err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(bytes)[:length], nil
+	for i := range raw {
+		raw[i] = charset[int(raw[i])%len(charset)]
+	}
+	return string(raw), nil
 }
 
 // generateAdminLogin генерирует логин вида admin_XxXxXx из 8 случайных букв.

@@ -52,6 +52,10 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 			c.JSON(http.StatusOK, gin.H{"message": "pong", "adminId": c.GetInt("adminId"), "role": c.GetString("role")})
 		})
 		adminGroup.POST("/logout", h.Admin.Logout)
+
+		// Управление админами — только super_admin
+		adminGroup.POST("/create-admin", admin.RequireRole("super_admin"), h.Admin.CreateAdmin)
+		adminGroup.DELETE("/delete-admin/:id", admin.RequireRole("super_admin"), h.Admin.DeleteAdmin)
 	}
 }
 

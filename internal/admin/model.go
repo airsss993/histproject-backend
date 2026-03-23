@@ -23,6 +23,17 @@ type TokenResponse struct {
 	RefreshToken string
 }
 
+// CreateAdminRequest — тело запроса на создание админа.
+type CreateAdminRequest struct {
+	Role string `json:"role" binding:"required,oneof=admin super_admin"`
+}
+
+// CreateAdminResponse — ответ с данными созданного админа.
+type CreateAdminResponse struct {
+	Login    string `json:"login"`
+	Password string `json:"password"`
+}
+
 // AdminSession — сессия администратора в БД.
 type AdminSession struct {
 	ID           int       `db:"id"`
