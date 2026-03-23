@@ -101,7 +101,7 @@ func (h *Handler) DeleteAdmin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Админ удалён"})
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
 func clearTokenCookies(c *gin.Context) {
