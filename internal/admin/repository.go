@@ -15,6 +15,8 @@ type Repository interface {
 	Create(ctx context.Context, login, passwordHash, role string) (bool, error)
 	HasSuperAdmin(ctx context.Context) (bool, error)
 
+	Delete(ctx context.Context, id int) error
+
 	CreateSession(ctx context.Context, adminID int, refreshToken string, expiresAt time.Time) error
 	GetSessionByToken(ctx context.Context, refreshToken string) (*AdminSession, error)
 	DeleteSession(ctx context.Context, refreshToken string) error
@@ -92,6 +94,16 @@ func (r *repository) GetSessionByToken(ctx context.Context, refreshToken string)
 		return nil, fmt.Errorf("сессия не найдена: %w", err)
 	}
 	return &s, nil
+}
+
+// Delete удаляет администратора по ID.
+func (r *repository) Delete(ctx context.Context, id int) error {
+	query := `DELETE FROM admins WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("ошибка удаления админа: %w", err)
+	}
+	return nil
 }
 
 // DeleteSession удаляет сессию по refresh-токену.
