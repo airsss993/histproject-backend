@@ -33,11 +33,11 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 			c.JSON(http.StatusOK, gin.H{"message": "pong"})
 		})
 
-		public.GET("objects/get-object-data/:id", h.Objects.GetObjectData)
-		public.POST("objects/get-objects-list", h.Objects.GetObjectsList)
-		public.GET("objects/get-event-types-list", h.Objects.GetEventTypesList)
+		public.GET("objects/:id", h.Objects.GetObjectData)
+		public.GET("objects", h.Objects.GetObjectsList)
+		public.GET("event-types", h.Objects.GetEventTypesList)
 
-		public.POST("requests/create-request", h.Requests.CreateRequest)
+		public.POST("requests", h.Requests.CreateRequest)
 
 		// Публичные эндпоинты авторизации админов
 		public.POST("admin/login", h.Admin.Login)
@@ -54,8 +54,8 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 		adminGroup.POST("/logout", h.Admin.Logout)
 
 		// Управление админами — только super_admin
-		adminGroup.POST("/create-admin", admin.RequireRole("super_admin"), h.Admin.CreateAdmin)
-		adminGroup.DELETE("/delete-admin/:id", admin.RequireRole("super_admin"), h.Admin.DeleteAdmin)
+		adminGroup.POST("/admins", admin.RequireRole("super_admin"), h.Admin.CreateAdmin)
+		adminGroup.DELETE("/admins/:id", admin.RequireRole("super_admin"), h.Admin.DeleteAdmin)
 	}
 }
 

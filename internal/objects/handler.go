@@ -47,9 +47,9 @@ func (h *Handler) GetObjectData(c *gin.Context) {
 
 // GetObjectsListReq — параметры фильтрации списка объектов.
 type GetObjectsListReq struct {
-	EventTypeIDs []int  `json:"eventTypeIds" binding:"omitempty,dive,gt=0"`
-	DateFrom     string `json:"dateFrom" binding:"omitempty,datetime=2006-01-02"`
-	DateTo       string `json:"dateTo" binding:"omitempty,datetime=2006-01-02"`
+	EventTypeIDs []int  `form:"eventTypeIds" binding:"omitempty,dive,gt=0"`
+	DateFrom     string `form:"dateFrom" binding:"omitempty,datetime=2006-01-02"`
+	DateTo       string `form:"dateTo" binding:"omitempty,datetime=2006-01-02"`
 }
 
 // GetObjectsListResp — ответ со списком объектов.
@@ -60,11 +60,9 @@ type GetObjectsListResp struct {
 // GetObjectsList возвращает список объектов с фильтрами.
 func (h *Handler) GetObjectsList(c *gin.Context) {
 	var req GetObjectsListReq
-	if c.Request.ContentLength > 0 {
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка парсинга JSON: " + err.Error()})
-			return
-		}
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка парсинга запроса: " + err.Error()})
+		return
 	}
 
 	list, err := h.svc.GetObjectsList(c.Request.Context(), req.EventTypeIDs, req.DateFrom, req.DateTo)
