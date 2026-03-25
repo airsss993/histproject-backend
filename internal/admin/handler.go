@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+
 // Handler — HTTP-обработчики аутентификации администраторов.
 type Handler struct {
 	svc *Service
@@ -107,4 +108,34 @@ func (h *Handler) DeleteAdmin(c *gin.Context) {
 func clearTokenCookies(c *gin.Context) {
 	c.SetCookie("access_token", "", -1, "/", "", false, true)
 	c.SetCookie("refresh_token", "", -1, "/api/admin/", "", false, true)
+}
+
+// GetRequests возвращает список заявок с опциональным фильтром по статусу.
+func (h *Handler) GetRequests(c *gin.Context) {
+	status := c.Query("status")
+
+	list, err := h.svc.ListRequests(c.Request.Context(), status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Ошибка получения списка заявок: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"requests": list})
+}
+
+// GetRequest возвращает полную карточку заявки по ID.
+func (h *Handler) GetRequest(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID заявки"})
+		return
+	}
+
+	req, err := h.svc.GetRequest(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Заявка не найдена"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"request": req})
 }

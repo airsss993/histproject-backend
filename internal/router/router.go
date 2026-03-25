@@ -52,6 +52,10 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 		})
 		adminGroup.POST("/logout", h.Admin.Logout)
 
+		// Заявки
+		adminGroup.GET("/requests", h.Admin.GetRequests)
+		adminGroup.GET("/requests/:id", h.Admin.GetRequest)
+
 		// Управление админами — только super_admin
 		adminGroup.POST("/admins", admin.RequireRole("super_admin"), h.Admin.CreateAdmin)
 		adminGroup.DELETE("/admins/:id", admin.RequireRole("super_admin"), h.Admin.DeleteAdmin)

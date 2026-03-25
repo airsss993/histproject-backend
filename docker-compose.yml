@@ -2,16 +2,16 @@ name: "histproject-backend"
 
 services:
   app:
-    image: ghcr.io/airsss993/histproject-backend:main
-    pull_policy: always
+    # image: ghcr.io/airsss993/histproject-backend:main
+    # pull_policy: always
     build: .
     ports:
       - "7666:7666"
     env_file:
       - .env
     depends_on:
-      db:
-        condition: service_healthy
+      # db:
+      #   condition: service_healthy
       minio:
         condition: service_healthy
       # clamav:
@@ -19,22 +19,22 @@ services:
       chrome:
         condition: service_healthy
 
-  db:
-    image: postgres:18-alpine
-    restart: always
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - db-data:/var/lib/postgresql/18/docker
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+  # db:
+  #   image: postgres:18-alpine
+  #   restart: always
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #   volumes:
+  #     - db-data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
 
   caddy:
     image: caddy:2-alpine

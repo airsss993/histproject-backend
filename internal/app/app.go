@@ -57,7 +57,7 @@ func Run() {
 
 	// Инициализация модуля admin
 	adminRepo := admin.NewRepository(conn)
-	adminSvc := admin.NewService(adminRepo, cfg.Auth.JWTSecret)
+	adminSvc := admin.NewService(adminRepo, requestsRepo, cfg.Auth.JWTSecret)
 	adminHandler := admin.NewHandler(adminSvc)
 
 	// Автосоздание super_admin при первом запуске
