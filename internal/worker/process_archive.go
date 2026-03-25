@@ -61,6 +61,7 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 	if err != nil {
 		return fmt.Errorf("ошибка при получении архива из хранилища: %w", err)
 	}
+	defer archive.Close()
 
 	if w.cfg.App.ClamAVEnabled {
 		if err := w.checkArchiveForViruses(archive); err != nil {
@@ -153,6 +154,7 @@ func (w *Worker) unzipArchive(requestID int, archiveID string) error {
 	if err != nil {
 		return fmt.Errorf("ошибка при получении архива из хранилища: %w", err)
 	}
+	defer archive.Close()
 
 	// 2. Открыть как zip через zip.NewReader(object, size)
 	zipReader, err := zip.NewReader(archive, size)
