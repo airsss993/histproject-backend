@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Документация — histproject</title>
+  <title>🌍 API — Россия, страна Героев</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -328,7 +328,6 @@
   <a href="#ping"><span class="badge get">GET</span>Ping</a>
   <a href="#objects-list"><span class="badge get">GET</span>Список объектов</a>
   <a href="#object-data"><span class="badge get">GET</span>Данные объекта</a>
-  <a href="#event-types"><span class="badge get">GET</span>Типы событий</a>
   <a href="#create-request"><span class="badge post">POST</span>Создать заявку</a>
 
   <div class="section-title">Авторизация</div>
@@ -343,7 +342,7 @@
 
 <!-- ══════════ Main ══════════ -->
 <main>
-  <h1>API Reference</h1>
+  <h1>Документация API</h1>
   <div class="subtitle">
     Базовый URL: <code id="base-url">https://your-domain.com/api</code>
   </div>
@@ -467,35 +466,6 @@ GET /api/objects?eventTypeIds=2&amp;dateFrom=2015-01-01&amp;dateTo=2020-01-01</p
     </div>
   </div>
 
-  <!-- ── Типы событий ── -->
-  <div class="endpoint-card section-anchor" id="event-types">
-    <div class="card-header">
-      <span class="method get">GET</span>
-      <span class="path">/event-types</span>
-    </div>
-    <div class="card-body">
-      <p class="desc">Справочник всех типов исторических событий. Используется для фильтров и формы заявки.</p>
-
-      <div class="section-label">Пример</div>
-      <pre>GET /api/event-types</pre>
-
-      <div class="section-label">Ответ 200</div>
-      <pre>{
-  <span class="key">"eventTypes"</span>: [
-    {
-      <span class="key">"id"</span>:          <span class="num">1</span>,
-      <span class="key">"name"</span>:        <span class="str">"Битва"</span>,
-      <span class="key">"description"</span>: <span class="str">"Военное сражение"</span>
-    },
-    {
-      <span class="key">"id"</span>:          <span class="num">2</span>,
-      <span class="key">"name"</span>:        <span class="str">"Восстание"</span>,
-      <span class="key">"description"</span>: <span class="str">"Народное восстание или бунт"</span>
-    }
-  ]
-}</pre>
-    </div>
-  </div>
 
   <!-- ── Создать заявку ── -->
   <div class="endpoint-card section-anchor" id="create-request">
@@ -538,7 +508,7 @@ GET /api/objects?eventTypeIds=2&amp;dateFrom=2015-01-01&amp;dateTo=2020-01-01</p
         <tr>
           <td>eventTypeId<span class="required-mark">*</span></td>
           <td>int</td>
-          <td>ID типа события из <code>/event-types</code></td>
+          <td>ID типа события</td>
           <td>да</td>
         </tr>
         <tr>

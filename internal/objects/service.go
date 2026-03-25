@@ -22,7 +22,3 @@ func (s *Service) GetObjectsList(ctx context.Context, eventTypeIDs []int, dateFr
 	return s.repo.List(ctx, eventTypeIDs, dateFrom, dateTo)
 }
 
-// GetEventTypesList возвращает список типов событий.
-func (s *Service) GetEventTypesList(ctx context.Context) ([]EventTypeInfo, error) {
-	return s.repo.ListEventTypes(ctx)
-}

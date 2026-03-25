@@ -74,17 +74,3 @@ func (h *Handler) GetObjectsList(c *gin.Context) {
 	c.JSON(http.StatusOK, GetObjectsListResp{Objects: list})
 }
 
-// GetEventTypesListResp — ответ со списком типов событий.
-type GetEventTypesListResp struct {
-	EventTypes []EventTypeInfo `json:"eventTypes"`
-}
-
-// GetEventTypesList возвращает список типов событий.
-func (h *Handler) GetEventTypesList(c *gin.Context) {
-	list, err := h.svc.GetEventTypesList(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка получения данных из БД: " + err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, GetEventTypesListResp{EventTypes: list})
-}

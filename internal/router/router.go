@@ -35,7 +35,6 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 
 		public.GET("objects/:id", h.Objects.GetObjectData)
 		public.GET("objects", h.Objects.GetObjectsList)
-		public.GET("event-types", h.Objects.GetEventTypesList)
 
 		public.POST("requests", h.Requests.CreateRequest)
 

@@ -8,11 +8,10 @@ import (
 	"github.com/lib/pq"
 )
 
-// Repository — доступ к данным объектов и типов событий.
+// Repository — доступ к данным объектов.
 type Repository interface {
 	GetByID(ctx context.Context, id int) (*SingleObjectInfo, error)
 	List(ctx context.Context, eventTypeIDs []int, dateFrom, dateTo string) ([]ObjectInfo, error)
-	ListEventTypes(ctx context.Context) ([]EventTypeInfo, error)
 }
 
 type repository struct {
@@ -78,12 +77,3 @@ func (r *repository) List(ctx context.Context, eventTypeIDs []int, dateFrom, dat
 	return list, nil
 }
 
-func (r *repository) ListEventTypes(ctx context.Context) ([]EventTypeInfo, error) {
-	var list []EventTypeInfo
-	query := `SELECT id, name, description FROM event_types`
-	err := r.db.SelectContext(ctx, &list, query)
-	if err != nil {
-		return nil, fmt.Errorf("ошибка получения типов событий с БД: %w", err)
-	}
-	return list, nil
-}
