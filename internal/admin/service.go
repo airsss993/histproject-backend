@@ -8,6 +8,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/airsss993/histproject-backend/internal/requests"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -20,13 +21,14 @@ const (
 
 // Service — бизнес-логика аутентификации администраторов.
 type Service struct {
-	repo      Repository
-	jwtSecret []byte
+	repo         Repository
+	requestsRepo requests.RequestRepository
+	jwtSecret    []byte
 }
 
 // NewService создаёт сервис администраторов.
-func NewService(repo Repository, jwtSecret string) *Service {
-	return &Service{repo: repo, jwtSecret: []byte(jwtSecret)}
+func NewService(repo Repository, requestsRepo requests.RequestRepository, jwtSecret string) *Service {
+	return &Service{repo: repo, requestsRepo: requestsRepo, jwtSecret: []byte(jwtSecret)}
 }
 
 // Login проверяет логин/пароль и возвращает пару токенов.
@@ -208,6 +210,16 @@ func generateRandomPassword(length int) (string, error) {
 		raw[i] = charset[int(raw[i])%len(charset)]
 	}
 	return string(raw), nil
+}
+
+// ListRequests возвращает список заявок с опциональным фильтром по статусу.
+func (s *Service) ListRequests(ctx context.Context, status string) ([]requests.RequestListItem, error) {
+	return s.requestsRepo.List(ctx, status)
+}
+
+// GetRequest возвращает полную карточку заявки по ID.
+func (s *Service) GetRequest(ctx context.Context, id int) (*requests.RequestDetail, error) {
+	return s.requestsRepo.GetByID(ctx, id)
 }
 
 // generateAdminLogin генерирует логин вида admin_XxXxXx из 8 случайных букв.

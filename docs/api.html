@@ -335,6 +335,10 @@
   <a href="#refresh"><span class="badge post">POST</span>Обновить токен</a>
   <a href="#logout"><span class="badge post">POST</span>Выйти</a>
 
+  <div class="section-title">Заявки</div>
+  <a href="#requests-list"><span class="badge get">GET</span>Список заявок</a>
+  <a href="#requests-detail"><span class="badge get">GET</span>Карточка заявки</a>
+
   <div class="section-title">Управление</div>
   <a href="#create-admin"><span class="badge post">POST</span>Создать админа</a>
   <a href="#delete-admin"><span class="badge del">DEL</span>Удалить админа</a>
@@ -615,6 +619,98 @@ GET /api/objects?eventTypeIds=2&amp;dateFrom=2015-01-01&amp;dateTo=2020-01-01</p
 
       <div class="section-label">Ответ 200</div>
       <pre>{ <span class="key">"message"</span>: <span class="str">"success"</span> }</pre>
+    </div>
+  </div>
+
+  <!-- ── Список заявок ── -->
+  <div class="endpoint-card section-anchor" id="requests-list">
+    <div class="card-header">
+      <span class="method get">GET</span>
+      <span class="path">/admin/requests</span>
+      <span class="lock-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT</span>
+    </div>
+    <div class="card-body">
+      <p class="desc">Список всех заявок. Опциональный фильтр по статусу через query-param.</p>
+
+      <div class="section-label">Query-параметры</div>
+      <table>
+        <tr><th>Параметр</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
+        <tr>
+          <td>status<span class="optional-mark">?</span></td>
+          <td>string</td>
+          <td>Фильтр по статусу. Возможные значения: <code>Новая</code>, <code>В обработке</code>, <code>На модерации</code>, <code>Одобрено</code>, <code>Отклонена</code>, <code>Опубликована</code></td>
+          <td>нет</td>
+        </tr>
+      </table>
+
+      <div class="section-label">Примеры</div>
+      <pre><span class="cm">// Все заявки</span>
+GET /api/admin/requests
+
+<span class="cm">// Только заявки на модерации</span>
+GET /api/admin/requests?status=На модерации</pre>
+
+      <div class="section-label">Ответ 200</div>
+      <pre>{
+  <span class="key">"requests"</span>: [
+    {
+      <span class="key">"id"</span>:        <span class="num">1</span>,
+      <span class="key">"title"</span>:     <span class="str">"Сражение при Бородино"</span>,
+      <span class="key">"status"</span>:    <span class="str">"На модерации"</span>,
+      <span class="key">"createdAt"</span>: <span class="str">"2026-03-25T10:00:00Z"</span>
+    }
+  ]
+}</pre>
+    </div>
+  </div>
+
+  <!-- ── Карточка заявки ── -->
+  <div class="endpoint-card section-anchor" id="requests-detail">
+    <div class="card-header">
+      <span class="method get">GET</span>
+      <span class="path">/admin/requests/<span class="param">:id</span></span>
+      <span class="lock-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT</span>
+    </div>
+    <div class="card-body">
+      <p class="desc">Полная карточка заявки — все поля включая ссылку на сайт и скриншот.</p>
+
+      <div class="section-label">Path-параметры</div>
+      <table>
+        <tr><th>Параметр</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
+        <tr>
+          <td>id<span class="required-mark">*</span></td>
+          <td>int</td>
+          <td>ID заявки</td>
+          <td>да</td>
+        </tr>
+      </table>
+
+      <div class="section-label">Пример</div>
+      <pre>GET /api/admin/requests/1</pre>
+
+      <div class="section-label">Ответ 200</div>
+      <pre>{
+  <span class="key">"request"</span>: {
+    <span class="key">"id"</span>:               <span class="num">1</span>,
+    <span class="key">"title"</span>:            <span class="str">"Сражение при Бородино"</span>,
+    <span class="key">"description"</span>:     <span class="str">"Описание события"</span>,
+    <span class="key">"eventDate"</span>:        <span class="str">"1812-09-07"</span>,
+    <span class="key">"eventTypeId"</span>:      <span class="num">2</span>,
+    <span class="key">"email"</span>:            <span class="str">"user@example.com"</span>,
+    <span class="key">"telegramUsername"</span>: <span class="str">"username"</span>,
+    <span class="key">"status"</span>:           <span class="str">"На модерации"</span>,
+    <span class="key">"adminComment"</span>:     <span class="null">null</span>,
+    <span class="key">"siteUrl"</span>:          <span class="str">"https://storage.example.com/sites/1/index.html"</span>,
+    <span class="key">"screenshotUrl"</span>:    <span class="str">"https://storage.example.com/sites/1/screenshot.png"</span>,
+    <span class="key">"createdAt"</span>:        <span class="str">"2026-03-25T10:00:00Z"</span>
+  }
+}</pre>
+
+      <div class="section-label">Ошибки</div>
+      <table>
+        <tr><th>Статус</th><th>Причина</th></tr>
+        <tr><td>404</td><td>Заявка не найдена</td></tr>
+      </table>
     </div>
   </div>
 

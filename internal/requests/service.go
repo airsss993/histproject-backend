@@ -89,3 +89,4 @@ func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (
 	_, _ = s.queue.Enqueue(task)
 	return nil
 }
+
