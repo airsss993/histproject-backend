@@ -12,6 +12,7 @@ import (
 type Repository interface {
 	GetByID(ctx context.Context, id int) (*SingleObjectInfo, error)
 	List(ctx context.Context, eventTypeIDs []int, dateFrom, dateTo string) ([]ObjectInfo, error)
+	CreateObject(ctx context.Context, data ObjectData) error
 }
 
 type repository struct {
@@ -75,5 +76,20 @@ func (r *repository) List(ctx context.Context, eventTypeIDs []int, dateFrom, dat
 		return []ObjectInfo{}, nil
 	}
 	return list, nil
+}
+
+func (r *repository) CreateObject(ctx context.Context, data ObjectData) error {
+	query := `
+		INSERT INTO objects
+			(request_id, title, description, latitude, longitude, event_date, event_type_id, site_url, preview_image_url)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	_, err := r.db.ExecContext(ctx, query,
+		data.RequestID, data.Title, data.Description, data.Latitude, data.Longitude,
+		data.EventDate, data.EventTypeID, data.SiteURL, data.PreviewImageURL,
+	)
+	if err != nil {
+		return fmt.Errorf("ошибка создания объекта на карте: %w", err)
+	}
+	return nil
 }
 
