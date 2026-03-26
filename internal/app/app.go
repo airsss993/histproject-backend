@@ -52,7 +52,7 @@ func Run() {
 	objectsSvc := objects.NewService(objectsRepo)
 	objectsHandler := objects.NewHandler(objectsSvc)
 
-	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask)
+	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask, objectsRepo)
 	requestsHandler := requests.NewHandler(requestsSvc)
 
 	// Инициализация модуля admin
