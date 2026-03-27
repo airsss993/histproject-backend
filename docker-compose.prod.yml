@@ -97,6 +97,20 @@ services:
   #     retries: 3
   #     start_period: 300s
 
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      GENERIC_TIMEZONE: "Asia/Yekaterinburg"
+      TZ: "Asia/Yekaterinburg"
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_RUNNERS_ENABLED: "true"
+    volumes:
+      - n8n-data:/home/node/.n8n
+
   chrome:
     image: chromedp/headless-shell:latest
     ports:
@@ -115,3 +129,4 @@ volumes:
   # clamav-data:
   caddy-data:
   caddy-config:
+  n8n-data:
