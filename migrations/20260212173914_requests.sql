@@ -2,7 +2,7 @@
 -- +goose StatementBegin
 
 -- Таблица заявок
-CREATE TYPE request_status AS ENUM ('Новая', 'В обработке', 'На модерации', 'Отклонена', 'Опубликована');
+CREATE TYPE request_status AS ENUM ('В обработке', 'На проверке', 'Отклонена', 'Опубликована');
 
 CREATE TABLE requests
 (
@@ -16,7 +16,7 @@ CREATE TABLE requests
     archive_id        VARCHAR(200)   NOT NULL,                             -- ID архива с сайтом в бакете
     site_url          VARCHAR(200),                                        -- URL развернутого сайта для просмотра
     screenshot_url    VARCHAR(200),                                        -- Скриншот главной страницы
-    status            request_status NOT NULL DEFAULT 'Новая',             -- Статус заявки
+    status            request_status NOT NULL DEFAULT 'В обработке',       -- Статус заявки
     admin_comment     TEXT,                                                -- Комментарий админа, при отклонение заявки
     created_at        TIMESTAMP      NOT NULL DEFAULT NOW(),               -- Дата создания записи
     updated_at        TIMESTAMP      NOT NULL DEFAULT NOW()                -- Дата последнего обновления записи

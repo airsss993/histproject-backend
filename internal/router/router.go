@@ -56,6 +56,10 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 		adminGroup.GET("/requests", h.Admin.GetRequests)
 		adminGroup.GET("/requests/:id", h.Admin.GetRequest)
 
+		// Модерация заявок — любой авторизованный админ
+		adminGroup.PATCH("/requests/:id/approve", admin.RequireRole("admin", "super_admin"), h.Requests.ApproveRequest)
+		adminGroup.PATCH("/requests/:id/reject", admin.RequireRole("admin", "super_admin"), h.Requests.RejectRequest)
+
 		// Управление админами — только super_admin
 		adminGroup.POST("/admins", admin.RequireRole("super_admin"), h.Admin.CreateAdmin)
 		adminGroup.DELETE("/admins/:id", admin.RequireRole("super_admin"), h.Admin.DeleteAdmin)
@@ -74,7 +78,7 @@ func corsMiddleware(allowedOrigins string) gin.HandlerFunc {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 		if c.Request.Method == "OPTIONS" {

@@ -13,7 +13,6 @@ CREATE TABLE admins
     created_at    TIMESTAMP    NOT NULL DEFAULT NOW()        -- Дата создания записи
 );
 
-
 -- +goose Down
 DROP TABLE IF EXISTS admins;
 DROP TYPE IF EXISTS admin_role;

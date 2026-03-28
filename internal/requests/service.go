@@ -2,9 +2,11 @@ package requests
 
 import (
 	"context"
+	"errors"
 	"mime/multipart"
 	"strings"
 
+	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/hibiken/asynq"
 )
 
@@ -29,15 +31,17 @@ type Service struct {
 	storage     StorageWriter
 	queue       QueueEnqueuer
 	taskBuilder TaskBuilder
+	objectsRepo objects.Repository
 }
 
 // NewService создаёт сервис заявок.
-func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder) *Service {
+func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder, objectsRepo objects.Repository) *Service {
 	return &Service{
 		repo:        repo,
 		storage:     storage,
 		queue:       queue,
 		taskBuilder: taskBuilder,
+		objectsRepo: objectsRepo,
 	}
 }
 
@@ -90,3 +94,56 @@ func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (
 	return nil
 }
 
+// ApproveRequest одобряет заявку: создаёт объект на карте и переводит статус в 'Опубликована'.
+func (s *Service) ApproveRequest(ctx context.Context, id int, latitude, longitude float64, eventTypeID int) error {
+	// Получаем заявку из БД
+	req, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return errors.New("заявка не найдена")
+	}
+
+	// Одобрять можно только заявки со статусом 'На проверке'
+	if req.Status != "На проверке" {
+		return errors.New("заявка не находится в статусе 'На проверке'")
+	}
+
+	// Создаём объект на карте
+	if err := s.objectsRepo.CreateObject(ctx, objects.ObjectData{
+		RequestID:       req.ID,
+		Title:           req.Title,
+		Description:     req.Description,
+		Latitude:        latitude,
+		Longitude:       longitude,
+		EventDate:       req.EventDate,
+		EventTypeID:     eventTypeID,
+		SiteURL:         req.SiteURL,
+		PreviewImageURL: req.ScreenshotURL,
+	}); err != nil {
+		return err
+	}
+
+	// Переводим статус заявки в 'Опубликована'
+	return s.repo.UpdateStatus(ctx, id, "Опубликована", "", req.SiteURL, req.ScreenshotURL)
+}
+
+// RejectRequest отклоняет заявку с обязательным комментарием.
+func (s *Service) RejectRequest(ctx context.Context, id int, comment string) error {
+	// Проверяем наличие комментария
+	if strings.TrimSpace(comment) == "" {
+		return errors.New("комментарий обязателен при отклонении")
+	}
+
+	// Получаем заявку из БД
+	req, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return errors.New("заявка не найдена")
+	}
+
+	// Отклонять можно только заявки со статусом 'На проверке'
+	if req.Status != "На проверке" {
+		return errors.New("заявка не находится в статусе 'На проверке'")
+	}
+
+	// Переводим статус заявки в 'Отклонена'
+	return s.repo.UpdateStatus(ctx, id, "Отклонена", comment, "", "")
+}

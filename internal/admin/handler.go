@@ -2,6 +2,7 @@ package admin
 
 import (
 	"net/http"
+	"slices"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -110,9 +111,17 @@ func clearTokenCookies(c *gin.Context) {
 	c.SetCookie("refresh_token", "", -1, "/api/admin/", "", false, true)
 }
 
+var validRequestStatuses = []string{"В обработке", "На проверке", "Отклонена", "Опубликована"}
+
 // GetRequests возвращает список заявок с опциональным фильтром по статусу.
 func (h *Handler) GetRequests(c *gin.Context) {
 	status := c.Query("status")
+
+	// Проверяем статус если передан
+	if status != "" && !slices.Contains(validRequestStatuses, status) {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Недопустимый статус: " + status})
+		return
+	}
 
 	list, err := h.svc.ListRequests(c.Request.Context(), status)
 	if err != nil {

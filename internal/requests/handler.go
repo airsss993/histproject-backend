@@ -4,6 +4,7 @@ import (
 	"errors"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -63,4 +64,68 @@ func (h *Handler) CreateRequest(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "success"})
+}
+
+// ApproveRequestReq — тело запроса на одобрение заявки.
+type ApproveRequestReq struct {
+	Latitude    float64 `json:"latitude"    binding:"required"`
+	Longitude   float64 `json:"longitude"   binding:"required"`
+	EventTypeId int     `json:"eventTypeId" binding:"required,gt=0"`
+}
+
+// ApproveRequest одобряет заявку и публикует объект на карте.
+func (h *Handler) ApproveRequest(c *gin.Context) {
+	// Парсим ID заявки из URL
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID заявки"})
+		return
+	}
+
+	// Парсим тело запроса
+	var req ApproveRequestReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка валидации: " + err.Error()})
+		return
+	}
+
+	// Одобряем заявку
+	err = h.svc.ApproveRequest(c.Request.Context(), id, req.Latitude, req.Longitude, req.EventTypeId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
+// RejectRequestReq — тело запроса на отклонение заявки.
+type RejectRequestReq struct {
+	Comment string `json:"comment" binding:"required"`
+}
+
+// RejectRequest отклоняет заявку с обязательным комментарием.
+func (h *Handler) RejectRequest(c *gin.Context) {
+	// Парсим ID заявки из URL
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID заявки"})
+		return
+	}
+
+	// Парсим тело запроса
+	var req RejectRequestReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Комментарий обязателен"})
+		return
+	}
+
+	// Отклоняем заявку
+	err = h.svc.RejectRequest(c.Request.Context(), id, req.Comment)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
