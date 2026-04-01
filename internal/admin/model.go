@@ -35,7 +35,8 @@ type TokenResponse struct {
 
 // CreateAdminRequest — тело запроса на создание админа.
 type CreateAdminRequest struct {
-	Role string `json:"role" binding:"required,oneof=admin super_admin"`
+	Email string `json:"email" binding:"required,email"`
+	Role  string `json:"role"  binding:"required,oneof=admin super_admin"`
 }
 
 // CreateAdminResponse — ответ с данными созданного админа.

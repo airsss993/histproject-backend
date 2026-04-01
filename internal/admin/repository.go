@@ -12,7 +12,7 @@ import (
 type Repository interface {
 	GetByLogin(ctx context.Context, login string) (*Admin, error)
 	GetByID(ctx context.Context, id int) (*Admin, error)
-	Create(ctx context.Context, login, passwordHash, role string) (bool, error)
+	Create(ctx context.Context, login, passwordHash, role, email string) (bool, error)
 	HasSuperAdmin(ctx context.Context) (bool, error)
 
 	Delete(ctx context.Context, id int) error
@@ -56,9 +56,9 @@ func (r *repository) GetByID(ctx context.Context, id int) (*Admin, error) {
 }
 
 // Create создаёт нового администратора. Возвращает false, если запись не была вставлена (конфликт).
-func (r *repository) Create(ctx context.Context, login, passwordHash, role string) (bool, error) {
-	query := `INSERT INTO admins (login, password_hash, role) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`
-	res, err := r.db.ExecContext(ctx, query, login, passwordHash, role)
+func (r *repository) Create(ctx context.Context, login, passwordHash, role, email string) (bool, error) {
+	query := `INSERT INTO admins (login, password_hash, role, email) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`
+	res, err := r.db.ExecContext(ctx, query, login, passwordHash, role, email)
 	if err != nil {
 		return false, fmt.Errorf("ошибка создания админа: %w", err)
 	}

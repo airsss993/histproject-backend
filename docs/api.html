@@ -876,6 +876,12 @@ GET /api/admin/requests?status=На проверке</pre>
       <table>
         <tr><th>Поле</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
         <tr>
+          <td>email<span class="required-mark">*</span></td>
+          <td>string</td>
+          <td>Email администратора</td>
+          <td>да</td>
+        </tr>
+        <tr>
           <td>role<span class="required-mark">*</span></td>
           <td>string</td>
           <td>Роль: <code>admin</code> или <code>super_admin</code></td>
@@ -883,7 +889,10 @@ GET /api/admin/requests?status=На проверке</pre>
         </tr>
       </table>
 
-      <pre>{ <span class="key">"role"</span>: <span class="str">"admin"</span> }</pre>
+      <pre>{
+  <span class="key">"email"</span>: <span class="str">"admin@example.com"</span>,
+  <span class="key">"role"</span>:  <span class="str">"admin"</span>
+}</pre>
 
       <div class="section-label">Ответ 201</div>
       <pre>{

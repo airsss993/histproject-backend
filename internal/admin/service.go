@@ -93,7 +93,7 @@ func (s *Service) SeedSuperAdmin(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("ошибка генерации логина: %w", err)
 	}
-	inserted, err := s.repo.Create(ctx, login, string(hash), "super_admin")
+	inserted, err := s.repo.Create(ctx, login, string(hash), "super_admin", "")
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (s *Service) SeedSuperAdmin(ctx context.Context) error {
 }
 
 // CreateAdmin создаёт нового администратора, генерирует login и password.
-func (s *Service) CreateAdmin(ctx context.Context, role string) (*CreateAdminResponse, error) {
+func (s *Service) CreateAdmin(ctx context.Context, role, email string) (*CreateAdminResponse, error) {
 	login, err := generateAdminLogin()
 	if err != nil {
 		return nil, fmt.Errorf("ошибка генерации логина: %w", err)
@@ -123,7 +123,7 @@ func (s *Service) CreateAdmin(ctx context.Context, role string) (*CreateAdminRes
 		return nil, fmt.Errorf("ошибка хеширования пароля: %w", err)
 	}
 
-	inserted, err := s.repo.Create(ctx, login, string(hash), role)
+	inserted, err := s.repo.Create(ctx, login, string(hash), role, email)
 	if err != nil {
 		return nil, err
 	}

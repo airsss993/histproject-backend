@@ -79,7 +79,7 @@ func (h *Handler) CreateAdmin(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.svc.CreateAdmin(c.Request.Context(), req.Role)
+	resp, err := h.svc.CreateAdmin(c.Request.Context(), req.Role, req.Email)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
