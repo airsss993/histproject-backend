@@ -61,8 +61,10 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 		adminGroup.PATCH("/requests/:id/reject", admin.RequireRole("admin", "super_admin"), h.Requests.RejectRequest)
 
 		// Управление админами — только super_admin
+		adminGroup.GET("/admins", admin.RequireRole("super_admin"), h.Admin.ListAdmins)
 		adminGroup.POST("/admins", admin.RequireRole("super_admin"), h.Admin.CreateAdmin)
 		adminGroup.DELETE("/admins/:id", admin.RequireRole("super_admin"), h.Admin.DeleteAdmin)
+		adminGroup.PATCH("/admins/:id/role", admin.RequireRole("super_admin"), h.Admin.UpdateAdminRole)
 	}
 }
 

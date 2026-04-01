@@ -9,6 +9,16 @@ type Admin struct {
 	PasswordHash string    `db:"password_hash"`
 	Role         string    `db:"role"`
 	CreatedAt    time.Time `db:"created_at"`
+	Email        string    `db:"email"`
+}
+
+// AdminListItem — представление администратора в списке (без пароля).
+type AdminListItem struct {
+	ID        int       `db:"id"         json:"id"`
+	Login     string    `db:"login"       json:"login"`
+	Email     string    `db:"email"       json:"email"`
+	Role      string    `db:"role"        json:"role"`
+	CreatedAt time.Time `db:"created_at"  json:"created_at"`
 }
 
 // LoginRequest — тело запроса на авторизацию.
@@ -32,6 +42,11 @@ type CreateAdminRequest struct {
 type CreateAdminResponse struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
+}
+
+// UpdateRoleRequest — тело запроса на смену роли администратора.
+type UpdateRoleRequest struct {
+	Role string `json:"role" binding:"required,oneof=admin super_admin"`
 }
 
 // AdminSession — сессия администратора в БД.

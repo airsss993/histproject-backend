@@ -134,6 +134,20 @@ func (s *Service) CreateAdmin(ctx context.Context, role string) (*CreateAdminRes
 	return &CreateAdminResponse{Login: login, Password: password}, nil
 }
 
+// ListAdmins возвращает список всех администраторов.
+func (s *Service) ListAdmins(ctx context.Context) ([]AdminListItem, error) {
+	return s.repo.ListAll(ctx)
+}
+
+// UpdateAdminRole меняет роль администратора. Нельзя изменить свою собственную роль.
+func (s *Service) UpdateAdminRole(ctx context.Context, callerID, targetID int, role string) error {
+	// Запрещаем смену роли самому себе
+	if callerID == targetID {
+		return errors.New("нельзя изменить свою собственную роль")
+	}
+	return s.repo.UpdateRole(ctx, targetID, role)
+}
+
 // DeleteAdmin удаляет администратора по ID. Нельзя удалить самого себя.
 func (s *Service) DeleteAdmin(ctx context.Context, callerID, targetID int) error {
 	if callerID == targetID {

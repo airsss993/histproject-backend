@@ -343,8 +343,10 @@
   <a href="#requests-reject"><span class="badge patch">PATCH</span>Отклонить заявку</a>
 
   <div class="section-title">Управление</div>
+  <a href="#list-admins"><span class="badge get">GET</span>Список админов</a>
   <a href="#create-admin"><span class="badge post">POST</span>Создать админа</a>
   <a href="#delete-admin"><span class="badge del">DEL</span>Удалить админа</a>
+  <a href="#update-admin-role"><span class="badge patch">PATCH</span>Сменить роль</a>
 </nav>
 
 <!-- ══════════ Main ══════════ -->
@@ -826,6 +828,39 @@ GET /api/admin/requests?status=На проверке</pre>
     </div>
   </div>
 
+  <!-- ── Список админов ── -->
+  <div class="endpoint-card section-anchor" id="list-admins">
+    <div class="card-header">
+      <span class="method get">GET</span>
+      <span class="path">/admin/admins</span>
+      <span class="lock-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT</span>
+      <span class="super-badge">super_admin</span>
+    </div>
+    <div class="card-body">
+      <p class="desc">Список всех администраторов. Пароли не возвращаются.</p>
+
+      <div class="section-label">Ответ 200</div>
+      <pre>{
+  <span class="key">"admins"</span>: [
+    {
+      <span class="key">"id"</span>:         <span class="num">1</span>,
+      <span class="key">"login"</span>:     <span class="str">"admin_XxYyZzAa"</span>,
+      <span class="key">"email"</span>:     <span class="str">"admin@example.com"</span>,
+      <span class="key">"role"</span>:      <span class="str">"super_admin"</span>,
+      <span class="key">"created_at"</span>: <span class="str">"2026-04-01T12:00:00Z"</span>
+    }
+  ]
+}</pre>
+
+      <div class="section-label">Ошибки</div>
+      <table>
+        <tr><th>Статус</th><th>Причина</th></tr>
+        <tr><td>401</td><td>Невалидный access_token</td></tr>
+        <tr><td>403</td><td>Недостаточно прав (требуется super_admin)</td></tr>
+      </table>
+    </div>
+  </div>
+
   <!-- ── Создать админа ── -->
   <div class="endpoint-card section-anchor" id="create-admin">
     <div class="card-header">
@@ -899,6 +934,56 @@ GET /api/admin/requests?status=На проверке</pre>
         <tr><th>Статус</th><th>Причина</th></tr>
         <tr><td>400</td><td>Попытка удалить самого себя</td></tr>
         <tr><td>400</td><td>Некорректный ID</td></tr>
+        <tr><td>401</td><td>Невалидный access_token</td></tr>
+        <tr><td>403</td><td>Недостаточно прав (требуется super_admin)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Сменить роль ── -->
+  <div class="endpoint-card section-anchor" id="update-admin-role">
+    <div class="card-header">
+      <span class="method patch">PATCH</span>
+      <span class="path">/admin/admins/<span class="param">:id</span>/role</span>
+      <span class="lock-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT</span>
+      <span class="super-badge">super_admin</span>
+    </div>
+    <div class="card-body">
+      <p class="desc">Изменение роли администратора по ID. Нельзя изменить свою собственную роль.</p>
+
+      <div class="section-label">Path-параметры</div>
+      <table>
+        <tr><th>Параметр</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
+        <tr>
+          <td>id<span class="required-mark">*</span></td>
+          <td>int</td>
+          <td>ID администратора</td>
+          <td>да</td>
+        </tr>
+      </table>
+
+      <div class="section-label">Тело запроса — application/json</div>
+      <table>
+        <tr><th>Поле</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
+        <tr>
+          <td>role<span class="required-mark">*</span></td>
+          <td>string</td>
+          <td>Новая роль: <code>admin</code> или <code>super_admin</code></td>
+          <td>да</td>
+        </tr>
+      </table>
+
+      <pre>{ <span class="key">"role"</span>: <span class="str">"admin"</span> }</pre>
+
+      <div class="section-label">Ответ 200</div>
+      <pre>{ <span class="key">"message"</span>: <span class="str">"success"</span> }</pre>
+
+      <div class="section-label">Ошибки</div>
+      <table>
+        <tr><th>Статус</th><th>Причина</th></tr>
+        <tr><td>400</td><td>Попытка изменить свою собственную роль</td></tr>
+        <tr><td>400</td><td>Некорректный ID или роль</td></tr>
+        <tr><td>400</td><td>Администратор не найден</td></tr>
         <tr><td>401</td><td>Невалидный access_token</td></tr>
         <tr><td>403</td><td>Недостаточно прав (требуется super_admin)</td></tr>
       </table>

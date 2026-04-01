@@ -88,6 +88,45 @@ func (h *Handler) CreateAdmin(c *gin.Context) {
 	c.JSON(http.StatusCreated, resp)
 }
 
+// ListAdmins возвращает список всех администраторов.
+func (h *Handler) ListAdmins(c *gin.Context) {
+	// Получаем список из сервиса
+	admins, err := h.svc.ListAdmins(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Ошибка получения списка администраторов: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"admins": admins})
+}
+
+// UpdateAdminRole меняет роль администратора по ID.
+func (h *Handler) UpdateAdminRole(c *gin.Context) {
+	// Парсим ID цели из URL-параметра
+	targetID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID"})
+		return
+	}
+
+	// Читаем тело запроса
+	var req UpdateRoleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка валидации: " + err.Error()})
+		return
+	}
+
+	callerID := c.GetInt("adminId")
+
+	// Обновляем роль через сервис
+	if err := h.svc.UpdateAdminRole(c.Request.Context(), callerID, targetID, req.Role); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
 // DeleteAdmin удаляет администратора по ID.
 func (h *Handler) DeleteAdmin(c *gin.Context) {
 	targetID, err := strconv.Atoi(c.Param("id"))

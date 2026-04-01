@@ -16,6 +16,8 @@ type Repository interface {
 	HasSuperAdmin(ctx context.Context) (bool, error)
 
 	Delete(ctx context.Context, id int) error
+	ListAll(ctx context.Context) ([]AdminListItem, error)
+	UpdateRole(ctx context.Context, id int, role string) error
 
 	CreateSession(ctx context.Context, adminID int, refreshToken string, expiresAt time.Time) error
 	GetSessionByToken(ctx context.Context, refreshToken string) (*AdminSession, error)
@@ -94,6 +96,31 @@ func (r *repository) GetSessionByToken(ctx context.Context, refreshToken string)
 		return nil, fmt.Errorf("сессия не найдена: %w", err)
 	}
 	return &s, nil
+}
+
+// ListAll возвращает всех администраторов без хешей паролей.
+func (r *repository) ListAll(ctx context.Context) ([]AdminListItem, error) {
+	var items []AdminListItem
+	query := `SELECT id, login, email, role, created_at FROM admins ORDER BY created_at ASC`
+	err := r.db.SelectContext(ctx, &items, query)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка получения списка администраторов: %w", err)
+	}
+	return items, nil
+}
+
+// UpdateRole обновляет роль администратора по ID.
+func (r *repository) UpdateRole(ctx context.Context, id int, role string) error {
+	query := `UPDATE admins SET role = $1 WHERE id = $2`
+	res, err := r.db.ExecContext(ctx, query, role, id)
+	if err != nil {
+		return fmt.Errorf("ошибка обновления роли: %w", err)
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("администратор не найден")
+	}
+	return nil
 }
 
 // Delete удаляет администратора по ID.
