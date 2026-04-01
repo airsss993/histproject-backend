@@ -105,7 +105,7 @@ services:
     environment:
       GENERIC_TIMEZONE: "Asia/Yekaterinburg"
       TZ: "Asia/Yekaterinburg"
-      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+      WEBHOOK_URL: ${N8N_PUBLIC_URL}
       N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
       N8N_RUNNERS_ENABLED: "true"
     volumes:
