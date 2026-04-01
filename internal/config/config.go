@@ -17,6 +17,7 @@ type (
 		CORS     CORS
 		Storage  Storage
 		Redis    Redis
+		N8N      N8N
 	}
 	App struct {
 		Port          string
@@ -49,6 +50,11 @@ type (
 	CORS struct {
 		AllowedOrigins string
 	}
+
+	N8N struct {
+		WebhookURL    string
+		WebhookSecret string
+	}
 )
 
 // Init загружает переменные окружения из .env файла и инициализирует конфигурацию приложения.
@@ -75,6 +81,8 @@ func setFromEnv(cfg *Config) error {
 
 	cfg.Database.DSN = os.Getenv("PG_DSN")
 	cfg.CORS.AllowedOrigins = os.Getenv("CORS_ALLOWED_ORIGINS")
+	cfg.N8N.WebhookURL = os.Getenv("N8N_WEBHOOK_URL")
+	cfg.N8N.WebhookSecret = os.Getenv("N8N_WEBHOOK_SECRET")
 
 	cfg.Storage.MinioEndpoint = os.Getenv("MINIO_ENDPOINT")
 	cfg.Storage.MinioUsername = os.Getenv("MINIO_ROOT_USER")
