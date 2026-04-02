@@ -40,7 +40,6 @@ type userPayload struct {
 	Email            string  `json:"email"`
 	TelegramUsername string  `json:"telegramUsername"`
 	ChatID           *int64  `json:"chatId"`
-	Status           string  `json:"status"`
 	AdminComment     *string `json:"adminComment"`
 	SiteURL          *string `json:"siteUrl"`
 }
@@ -66,7 +65,6 @@ func (n *Notifier) NotifyApproved(requestID int, title, email, telegramUsername,
 		Email:            email,
 		TelegramUsername: telegramUsername,
 		ChatID:           chatID,
-		Status:           "Одобрено",
 		AdminComment:     nil,
 		SiteURL:          &siteURL,
 	})
@@ -81,7 +79,6 @@ func (n *Notifier) NotifyRejected(requestID int, title, email, telegramUsername,
 		Email:            email,
 		TelegramUsername: telegramUsername,
 		ChatID:           chatID,
-		Status:           "Отклонено",
 		AdminComment:     &comment,
 		SiteURL:          nil,
 	})
