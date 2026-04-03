@@ -18,22 +18,22 @@ func New(webhook *notifier.Notifier, repo *Repository) *Service {
 }
 
 // OnNewRequest уведомляет администраторов о новой заявке.
-func (s *Service) OnNewRequest(ctx context.Context, requestID int, title, email, telegramUsername string) {
+func (s *Service) OnNewRequest(ctx context.Context, requestID int, title, email, username string) {
 	// Получаем email-адреса администраторов
 	adminEmails, _ := s.repo.GetAdminEmails(ctx)
-	s.webhook.NotifyNewRequest(requestID, title, email, telegramUsername, adminEmails)
+	s.webhook.NotifyNewRequest(requestID, title, email, username, adminEmails)
 }
 
 // OnApproved уведомляет пользователя об одобрении заявки.
-func (s *Service) OnApproved(ctx context.Context, requestID int, title, email, telegramUsername, siteURL string) {
+func (s *Service) OnApproved(ctx context.Context, requestID int, title, email, username, siteURL string) {
 	// Получаем chatId пользователя если он подписан на бота
-	chatID, _ := s.repo.GetChatID(ctx, telegramUsername)
-	s.webhook.NotifyApproved(requestID, title, email, telegramUsername, siteURL, chatID)
+	chatID, _ := s.repo.GetChatID(ctx, username)
+	s.webhook.NotifyApproved(requestID, title, email, username, siteURL, chatID)
 }
 
 // OnRejected уведомляет пользователя об отклонении заявки.
-func (s *Service) OnRejected(ctx context.Context, requestID int, title, email, telegramUsername, comment string) {
+func (s *Service) OnRejected(ctx context.Context, requestID int, title, email, username, comment string) {
 	// Получаем chatId пользователя если он подписан на бота
-	chatID, _ := s.repo.GetChatID(ctx, telegramUsername)
-	s.webhook.NotifyRejected(requestID, title, email, telegramUsername, comment, chatID)
+	chatID, _ := s.repo.GetChatID(ctx, username)
+	s.webhook.NotifyRejected(requestID, title, email, username, comment, chatID)
 }

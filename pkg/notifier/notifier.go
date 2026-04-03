@@ -30,7 +30,7 @@ type adminPayload struct {
 	Title            string   `json:"title"`
 	To               []string `json:"to"`
 	Email            string   `json:"email"`
-	TelegramUsername string   `json:"telegramUsername"`
+	Username string   `json:"username"`
 }
 
 type userPayload struct {
@@ -38,32 +38,32 @@ type userPayload struct {
 	RequestID        int     `json:"requestId"`
 	Title            string  `json:"title"`
 	Email            string  `json:"email"`
-	TelegramUsername string  `json:"telegramUsername"`
+	Username string  `json:"username"`
 	ChatID           *int64  `json:"chatId"`
 	AdminComment     *string `json:"adminComment"`
 	SiteURL          *string `json:"siteUrl"`
 }
 
 // NotifyNewRequest уведомляет администраторов о новой заявке.
-func (n *Notifier) NotifyNewRequest(requestID int, title, email, telegramUsername string, adminEmails []string) {
+func (n *Notifier) NotifyNewRequest(requestID int, title, email, username string, adminEmails []string) {
 	n.send(adminPayload{
 		Event:            "new_request",
 		RequestID:        requestID,
 		Title:            title,
 		To:               adminEmails,
 		Email:            email,
-		TelegramUsername: telegramUsername,
+		Username: username,
 	})
 }
 
 // NotifyApproved уведомляет пользователя об одобрении заявки.
-func (n *Notifier) NotifyApproved(requestID int, title, email, telegramUsername, siteURL string, chatID *int64) {
+func (n *Notifier) NotifyApproved(requestID int, title, email, username, siteURL string, chatID *int64) {
 	n.send(userPayload{
 		Event:            "request_approved",
 		RequestID:        requestID,
 		Title:            title,
 		Email:            email,
-		TelegramUsername: telegramUsername,
+		Username: username,
 		ChatID:           chatID,
 		AdminComment:     nil,
 		SiteURL:          &siteURL,
@@ -71,13 +71,13 @@ func (n *Notifier) NotifyApproved(requestID int, title, email, telegramUsername,
 }
 
 // NotifyRejected уведомляет пользователя об отклонении заявки.
-func (n *Notifier) NotifyRejected(requestID int, title, email, telegramUsername, comment string, chatID *int64) {
+func (n *Notifier) NotifyRejected(requestID int, title, email, username, comment string, chatID *int64) {
 	n.send(userPayload{
 		Event:            "request_rejected",
 		RequestID:        requestID,
 		Title:            title,
 		Email:            email,
-		TelegramUsername: telegramUsername,
+		Username: username,
 		ChatID:           chatID,
 		AdminComment:     &comment,
 		SiteURL:          nil,
