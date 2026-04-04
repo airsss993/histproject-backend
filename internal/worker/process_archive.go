@@ -7,15 +7,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/airsss993/histproject-backend/internal/config"
 	"github.com/airsss993/histproject-backend/internal/requests"
 	"github.com/airsss993/histproject-backend/pkg/storage"
+	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 	"github.com/dutchcoders/go-clamd"
 	"github.com/hibiken/asynq"
@@ -26,6 +28,7 @@ type Worker struct {
 	requestRepo requests.RequestRepository
 	storage     *storage.MinioClient
 	cfg         config.Config
+	chromeMu    sync.Mutex
 }
 
 // NewWorker создаёт Worker с репозиторием заявок и хранилищем.
@@ -48,15 +51,13 @@ func NewMux(w *Worker) *asynq.ServeMux {
 
 // ProcessArchiveTask - обработчик задачи по обработке архива
 func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
-	// 1. Получение ID заявки и архива
+	// Получение ID заявки и архива
 	var payload ProcessArchivePayload
 	if err := json.Unmarshal(t.Payload(), &payload); err != nil {
 		return fmt.Errorf("ошибка при разборе полезной нагрузки задачи: %w", err)
 	}
 
-	log.Printf("[Worker] Начало обработки заявки %d", payload.RequestId)
-
-	// 2. Получение архива из хранилища по ID архива
+	// Получение архива из хранилища по ID архива
 	archive, _, err := w.storage.GetArchive(payload.ArchiveId)
 	if err != nil {
 		return fmt.Errorf("ошибка при получении архива из хранилища: %w", err)
@@ -75,7 +76,9 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 		return nil
 	}
 
+	w.chromeMu.Lock()
 	screenshotUrl, err := w.createScreenshot(payload.RequestId)
+	w.chromeMu.Unlock()
 	if err != nil {
 		return fmt.Errorf("ошибка при создании скриншота: %w", err)
 	}
@@ -85,6 +88,7 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 
 	return nil
 }
+
 func (w *Worker) createScreenshot(requestID int) (string, error) {
 	// Получаем актуальный WebSocket URL от Chrome
 	chromeAddr := strings.Replace(w.cfg.App.ChromeUrl, "ws://", "", 1)
@@ -112,7 +116,7 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 	parsedWsURL.Host = "chrome:9222"
 	wsURL := parsedWsURL.String()
 
-	// 1. Создание контекста для chromedp
+	// Создание контекста для chromedp
 	allocatorContext, cancel := chromedp.NewRemoteAllocator(
 		context.Background(),
 		wsURL,
@@ -120,28 +124,42 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 	)
 	defer cancel()
 
-	// 2. Создание контекста для выполнения задач chromedp
+	// Создание контекста для выполнения задач chromedp с таймаутом 60 секунд
 	ctx, cancel := chromedp.NewContext(allocatorContext)
+	defer cancel()
+	ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
 	var buf []byte
 	siteUrl := fmt.Sprintf("http://%s/sites/%d/index.html", w.cfg.Storage.MinioEndpoint, requestID)
 
-	// 3. Навигация к сайту и создание скриншота
+	// Выставляем размер скриншота 1920x1080 и делаем скриншот только видимой области.
 	if err := chromedp.Run(ctx,
-		chromedp.Navigate(siteUrl),
-		chromedp.FullScreenshot(&buf, 100),
+		chromedp.EmulateViewport(1920, 1080),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			_, _, _, _, err := page.Navigate(siteUrl).Do(ctx)
+			return err
+		}),
+		chromedp.Sleep(3*time.Second),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			data, err := page.CaptureScreenshot().WithQuality(90).Do(ctx)
+			if err != nil {
+				return err
+			}
+			buf = data
+			return nil
+		}),
 	); err != nil {
 		return "", fmt.Errorf("ошибка при создании скриншота: %w", err)
 	}
 
-	// 4. Загрузка скриншота в хранилище и получение URL
+	// Загрузка скриншота в хранилище и получение URL
 	screenshotKey := fmt.Sprintf("%d/screenshot.png", requestID)
 	if err := w.storage.UploadFileSites(bytes.NewReader(buf), int64(len(buf)), screenshotKey); err != nil {
 		return "", fmt.Errorf("ошибка при загрузке скриншота в хранилище: %w", err)
 	}
 
-	// 5. Формирование URL скриншота
+	// Формирование URL скриншота
 	screenshotUrl := fmt.Sprintf("https://%s/sites/%d/screenshot.png", w.cfg.Storage.MinioPublicUrl, requestID)
 
 	return screenshotUrl, nil
@@ -149,20 +167,20 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 
 // unzipArchive - функция для распаковки архива и загрузки файлов в хранилище
 func (w *Worker) unzipArchive(requestID int, archiveID string) error {
-	// 1. Получить объект из MinIO и его размер
+	// Получить объект из MinIO и его размер
 	archive, size, err := w.storage.GetArchive(archiveID)
 	if err != nil {
 		return fmt.Errorf("ошибка при получении архива из хранилища: %w", err)
 	}
 	defer archive.Close()
 
-	// 2. Открыть как zip через zip.NewReader(object, size)
+	// Открыть как zip через zip.NewReader(object, size)
 	zipReader, err := zip.NewReader(archive, size)
 	if err != nil {
 		return fmt.Errorf("ошибка при открытии архива как zip: %w", err)
 	}
 
-	// 3. Проверить наличие index.html в корне или на первом уровне вложенности
+	// Проверить наличие index.html в корне или на первом уровне вложенности
 	hasIndex := false
 	var prefix string
 	for _, file := range zipReader.File {
@@ -181,7 +199,7 @@ func (w *Worker) unzipArchive(requestID int, archiveID string) error {
 		return fmt.Errorf("ошибка при проверке наличия index.html в архиве: файл index.html не найден в корне или на первом уровне вложенности")
 	}
 
-	// 4. Распаковать все файлы и загрузить их в хранилище, сохраняя структуру папок
+	// Распаковать все файлы и загрузить их в хранилище, сохраняя структуру папок
 	for _, file := range zipReader.File {
 		if file.FileInfo().IsDir() {
 			continue

@@ -61,6 +61,7 @@ type CreateRequestInput struct {
 
 // CreateRequest создаёт заявку: проверяет архив, загружает, сохраняет в БД, ставит задачу в очередь.
 func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (err error) {
+	// Проверяем, что файл — zip и не больше 50 МБ
 	if !strings.Contains(input.Archive.Filename, ".zip") {
 		return ErrArchiveMustBeZip
 	}
@@ -68,11 +69,13 @@ func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (
 		return ErrArchiveTooLarge
 	}
 
+	// Загружаем архив в хранилище и получаем archiveId
 	archiveId, err := s.storage.UploadArchive(input.Archive)
 	if err != nil {
 		return err
 	}
 
+	// Сохраняем заявку в БД со статусом 'В обработке'
 	data := RequestData{
 		Title:            input.Title,
 		Description:      input.Description,
@@ -83,11 +86,13 @@ func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (
 		ArchiveId:        archiveId,
 	}
 
+	// Получаем ID новой заявки
 	requestID, err := s.repo.Create(ctx, data)
 	if err != nil {
 		return err
 	}
 
+	// Ставим задачу в очередь на обработку архива
 	task, err := s.taskBuilder(requestID, archiveId)
 	if err != nil {
 		return err
