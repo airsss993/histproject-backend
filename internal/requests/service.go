@@ -6,6 +6,7 @@ import (
 	"mime/multipart"
 	"strings"
 
+	"github.com/airsss993/histproject-backend/internal/notifications"
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/hibiken/asynq"
 )
@@ -27,21 +28,23 @@ type TaskBuilder func(requestID int, archiveID string) (*asynq.Task, error)
 
 // Service — бизнес-логика заявок.
 type Service struct {
-	repo        RequestRepository
-	storage     StorageWriter
-	queue       QueueEnqueuer
-	taskBuilder TaskBuilder
-	objectsRepo objects.Repository
+	repo          RequestRepository
+	storage       StorageWriter
+	queue         QueueEnqueuer
+	taskBuilder   TaskBuilder
+	objectsRepo   objects.Repository
+	notifications *notifications.Service
 }
 
 // NewService создаёт сервис заявок.
-func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder, objectsRepo objects.Repository) *Service {
+func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder, objectsRepo objects.Repository, notifications *notifications.Service) *Service {
 	return &Service{
-		repo:        repo,
-		storage:     storage,
-		queue:       queue,
-		taskBuilder: taskBuilder,
-		objectsRepo: objectsRepo,
+		repo:          repo,
+		storage:       storage,
+		queue:         queue,
+		taskBuilder:   taskBuilder,
+		objectsRepo:   objectsRepo,
+		notifications: notifications,
 	}
 }
 
@@ -91,6 +94,9 @@ func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (
 	}
 
 	_, _ = s.queue.Enqueue(task)
+
+	// Уведомляем администраторов о новой заявке
+	s.notifications.OnNewRequest(ctx, requestID, input.Title, input.Email, input.TelegramUsername)
 	return nil
 }
 
@@ -123,7 +129,13 @@ func (s *Service) ApproveRequest(ctx context.Context, id int, latitude, longitud
 	}
 
 	// Переводим статус заявки в 'Опубликована'
-	return s.repo.UpdateStatus(ctx, id, "Опубликована", "", req.SiteURL, req.ScreenshotURL)
+	if err := s.repo.UpdateStatus(ctx, id, "Опубликована", "", req.SiteURL, req.ScreenshotURL); err != nil {
+		return err
+	}
+
+	// Уведомляем пользователя об одобрении заявки
+	s.notifications.OnApproved(ctx, req.ID, req.Title, req.Email, req.TelegramUsername, req.SiteURL)
+	return nil
 }
 
 // RejectRequest отклоняет заявку с обязательным комментарием.
@@ -145,5 +157,11 @@ func (s *Service) RejectRequest(ctx context.Context, id int, comment string) err
 	}
 
 	// Переводим статус заявки в 'Отклонена'
-	return s.repo.UpdateStatus(ctx, id, "Отклонена", comment, "", "")
+	if err := s.repo.UpdateStatus(ctx, id, "Отклонена", comment, "", ""); err != nil {
+		return err
+	}
+
+	// Уведомляем пользователя об отклонении заявки
+	s.notifications.OnRejected(ctx, req.ID, req.Title, req.Email, req.TelegramUsername, comment)
+	return nil
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/airsss993/histproject-backend/internal/admin"
 	"github.com/airsss993/histproject-backend/internal/config"
+	"github.com/airsss993/histproject-backend/internal/notifications"
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/airsss993/histproject-backend/internal/requests"
 	"github.com/airsss993/histproject-backend/internal/router"
@@ -17,6 +18,7 @@ import (
 	"github.com/airsss993/histproject-backend/internal/worker"
 	"github.com/airsss993/histproject-backend/migrations"
 	"github.com/airsss993/histproject-backend/pkg/db"
+	"github.com/airsss993/histproject-backend/pkg/notifier"
 	"github.com/airsss993/histproject-backend/pkg/queue"
 	"github.com/airsss993/histproject-backend/pkg/storage"
 )
@@ -52,12 +54,17 @@ func Run() {
 	objectsSvc := objects.NewService(objectsRepo)
 	objectsHandler := objects.NewHandler(objectsSvc)
 
-	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask, objectsRepo)
-	requestsHandler := requests.NewHandler(requestsSvc)
-
 	// Инициализация модуля admin
 	adminRepo := admin.NewRepository(conn)
 	adminSvc := admin.NewService(adminRepo, requestsRepo, cfg.Auth.JWTSecret)
+
+	// Инициализация модуля notifications
+	notifRepo := notifications.NewRepository(conn)
+	n8nNotifier := notifier.New(cfg.N8N.WebhookURL, cfg.N8N.WebhookSecret)
+	notifSvc := notifications.New(n8nNotifier, notifRepo)
+
+	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask, objectsRepo, notifSvc)
+	requestsHandler := requests.NewHandler(requestsSvc)
 	adminHandler := admin.NewHandler(adminSvc)
 
 	// Автосоздание super_admin при первом запуске
