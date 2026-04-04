@@ -84,7 +84,7 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 	}
 
 	siteUrl := fmt.Sprintf("https://%s/sites/%d/index.html", w.cfg.Storage.MinioPublicUrl, payload.RequestId)
-	_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "На проверке", "", siteUrl, screenshotUrl)
+	_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Новая", "", siteUrl, screenshotUrl)
 
 	return nil
 }
