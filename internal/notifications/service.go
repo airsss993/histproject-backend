@@ -24,6 +24,13 @@ func (s *Service) OnNewRequest(ctx context.Context, requestID int, title, email,
 	s.webhook.NotifyNewRequest(requestID, title, email, username, adminEmails)
 }
 
+// OnUnderReview уведомляет пользователя о том, что заявка взята на проверку.
+func (s *Service) OnUnderReview(ctx context.Context, requestID int, title, email, username string) {
+	// Получаем chatId пользователя если он подписан на бота
+	chatID, _ := s.repo.GetChatID(ctx, username)
+	s.webhook.NotifyUnderReview(requestID, title, email, username, chatID)
+}
+
 // OnApproved уведомляет пользователя об одобрении заявки.
 func (s *Service) OnApproved(ctx context.Context, requestID int, title, email, username, siteURL string) {
 	// Получаем chatId пользователя если он подписан на бота

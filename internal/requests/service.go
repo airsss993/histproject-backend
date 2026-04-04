@@ -126,6 +126,9 @@ func (s *Service) ReviewRequest(ctx context.Context, id int, adminLogin, adminRo
 	// Записываем действие в аудит-лог
 	_ = s.repo.LogHistory(ctx, id, adminLogin, adminRole, "Взята на проверку", "")
 
+	// Уведомляем пользователя о том, что заявка взята на проверку
+	s.notifications.OnUnderReview(ctx, req.ID, req.Title, req.Email, req.TelegramUsername)
+
 	return nil
 }
 

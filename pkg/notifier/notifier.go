@@ -56,6 +56,20 @@ func (n *Notifier) NotifyNewRequest(requestID int, title, email, username string
 	})
 }
 
+// NotifyUnderReview уведомляет пользователя о том, что заявка взята на проверку.
+func (n *Notifier) NotifyUnderReview(requestID int, title, email, username string, chatID *int64) {
+	n.send(userPayload{
+		Event:        "request_under_review",
+		RequestID:    requestID,
+		Title:        title,
+		Email:        email,
+		Username:     username,
+		ChatID:       chatID,
+		AdminComment: nil,
+		SiteURL:      nil,
+	})
+}
+
 // NotifyApproved уведомляет пользователя об одобрении заявки.
 func (n *Notifier) NotifyApproved(requestID int, title, email, username, siteURL string, chatID *int64) {
 	n.send(userPayload{
