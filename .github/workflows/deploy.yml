@@ -38,7 +38,7 @@ jobs:
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main
 
             echo "🚀 Пересоздание контейнера app..."
-            docker compose up -d --no-deps --build app
+            docker compose up -d --no-deps --force-recreate app
 
             echo "🧹 Удаление неиспользуемых образов..."
             docker image prune -f
