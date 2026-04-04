@@ -44,6 +44,7 @@ func JWTMiddleware(svc *Service) gin.HandlerFunc {
 
 		c.Set("adminId", int(claims["adminId"].(float64)))
 		c.Set("role", claims["role"].(string))
+		c.Set("adminLogin", claims["login"].(string))
 		c.Next()
 	}
 }

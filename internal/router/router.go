@@ -55,6 +55,7 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 		// Заявки
 		adminGroup.GET("/requests", h.Admin.GetRequests)
 		adminGroup.GET("/requests/:id", h.Admin.GetRequest)
+		adminGroup.GET("/history", admin.RequireRole("super_admin"), h.Admin.GetRequestHistory)
 
 		// Модерация заявок — любой авторизованный админ
 		adminGroup.PATCH("/requests/:id/approve", admin.RequireRole("admin", "super_admin"), h.Requests.ApproveRequest)

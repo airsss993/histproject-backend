@@ -187,3 +187,14 @@ func (h *Handler) GetRequest(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"request": req})
 }
+
+// GetRequestHistory возвращает полную историю действий администраторов по всем заявкам.
+func (h *Handler) GetRequestHistory(c *gin.Context) {
+	history, err := h.svc.GetRequestHistory(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Ошибка получения истории: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"history": history})
+}

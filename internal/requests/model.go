@@ -10,6 +10,18 @@ type RequestListItem struct {
 	CreatedAt time.Time `db:"created_at" json:"createdAt"`
 }
 
+// RequestHistoryItem — запись аудит-лога действия администратора над заявкой.
+type RequestHistoryItem struct {
+	ID           int       `db:"id"            json:"id"`
+	RequestID    int       `db:"request_id"    json:"requestId"`
+	RequestTitle string    `db:"request_title" json:"requestTitle"`
+	Action       string    `db:"action"        json:"action"`
+	Comment      string    `db:"comment"       json:"comment"`
+	AdminLogin   string    `db:"admin_login"   json:"adminLogin"`
+	AdminRole    string    `db:"admin_role"    json:"adminRole"`
+	CreatedAt    time.Time `db:"created_at"    json:"createdAt"`
+}
+
 // RequestDetail — полная информация о заявке для карточки.
 type RequestDetail struct {
 	ID               int       `db:"id" json:"id"`

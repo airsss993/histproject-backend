@@ -89,8 +89,11 @@ func (h *Handler) ApproveRequest(c *gin.Context) {
 		return
 	}
 
+	adminLogin := c.GetString("adminLogin")
+	adminRole := c.GetString("role")
+
 	// Одобряем заявку
-	err = h.svc.ApproveRequest(c.Request.Context(), id, req.Latitude, req.Longitude, req.EventTypeId)
+	err = h.svc.ApproveRequest(c.Request.Context(), id, adminLogin, adminRole, req.Latitude, req.Longitude, req.EventTypeId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
@@ -120,8 +123,11 @@ func (h *Handler) RejectRequest(c *gin.Context) {
 		return
 	}
 
+	adminLogin := c.GetString("adminLogin")
+	adminRole := c.GetString("role")
+
 	// Отклоняем заявку
-	err = h.svc.RejectRequest(c.Request.Context(), id, req.Comment)
+	err = h.svc.RejectRequest(c.Request.Context(), id, adminLogin, adminRole, req.Comment)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return

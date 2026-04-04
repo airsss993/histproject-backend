@@ -13,6 +13,8 @@ type RequestRepository interface {
 	UpdateStatus(ctx context.Context, id int, status, comment, siteURL, screenshotURL string) error
 	List(ctx context.Context, status string) ([]RequestListItem, error)
 	GetByID(ctx context.Context, id int) (*RequestDetail, error)
+	LogHistory(ctx context.Context, requestID int, adminLogin, adminRole, action, comment string) error
+	GetHistory(ctx context.Context) ([]RequestHistoryItem, error)
 }
 
 // RequestData — данные заявки для сохранения в БД.
@@ -94,4 +96,30 @@ func (r *repository) GetByID(ctx context.Context, id int) (*RequestDetail, error
 		return nil, fmt.Errorf("заявка не найдена: %w", err)
 	}
 	return &req, nil
+}
+
+func (r *repository) LogHistory(ctx context.Context, requestID int, adminLogin, adminRole, action, comment string) error {
+	query := `INSERT INTO request_audit_log (request_id, admin_login, admin_role, action, comment) VALUES ($1, $2, $3, $4, $5)`
+	_, err := r.db.ExecContext(ctx, query, requestID, adminLogin, adminRole, action, comment)
+	if err != nil {
+		return fmt.Errorf("ошибка записи в аудит-лог: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) GetHistory(ctx context.Context) ([]RequestHistoryItem, error) {
+	var items []RequestHistoryItem
+	query := `
+		SELECT l.id, l.request_id, r.title AS request_title, l.action, l.comment, l.admin_login, l.admin_role, l.created_at
+		FROM request_audit_log l
+		JOIN requests r ON r.id = l.request_id
+		ORDER BY l.created_at DESC`
+	err := r.db.SelectContext(ctx, &items, query)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка получения истории действий: %w", err)
+	}
+	if items == nil {
+		return []RequestHistoryItem{}, nil
+	}
+	return items, nil
 }

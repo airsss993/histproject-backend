@@ -106,7 +106,7 @@ func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (
 }
 
 // ApproveRequest одобряет заявку: создаёт объект на карте и переводит статус в 'Опубликована'.
-func (s *Service) ApproveRequest(ctx context.Context, id int, latitude, longitude float64, eventTypeID int) error {
+func (s *Service) ApproveRequest(ctx context.Context, id int, adminLogin, adminRole string, latitude, longitude float64, eventTypeID int) error {
 	// Получаем заявку из БД
 	req, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -138,13 +138,16 @@ func (s *Service) ApproveRequest(ctx context.Context, id int, latitude, longitud
 		return err
 	}
 
+	// Записываем действие в аудит-лог
+	_ = s.repo.LogHistory(ctx, id, adminLogin, adminRole, "Одобрена", "")
+
 	// Уведомляем пользователя об одобрении заявки
 	s.notifications.OnApproved(ctx, req.ID, req.Title, req.Email, req.TelegramUsername, req.SiteURL)
 	return nil
 }
 
 // RejectRequest отклоняет заявку с обязательным комментарием.
-func (s *Service) RejectRequest(ctx context.Context, id int, comment string) error {
+func (s *Service) RejectRequest(ctx context.Context, id int, adminLogin, adminRole, comment string) error {
 	// Проверяем наличие комментария
 	if strings.TrimSpace(comment) == "" {
 		return errors.New("комментарий обязателен при отклонении")
@@ -165,6 +168,9 @@ func (s *Service) RejectRequest(ctx context.Context, id int, comment string) err
 	if err := s.repo.UpdateStatus(ctx, id, "Отклонена", comment, "", ""); err != nil {
 		return err
 	}
+
+	// Записываем действие в аудит-лог
+	_ = s.repo.LogHistory(ctx, id, adminLogin, adminRole, "Отклонена", comment)
 
 	// Уведомляем пользователя об отклонении заявки
 	s.notifications.OnRejected(ctx, req.ID, req.Title, req.Email, req.TelegramUsername, comment)

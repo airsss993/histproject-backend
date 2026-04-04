@@ -42,7 +42,7 @@ func (s *Service) Login(ctx context.Context, login, password string) (*TokenResp
 		return nil, errors.New("неверный логин или пароль")
 	}
 
-	return s.generateTokenPair(ctx, a.ID, a.Role)
+	return s.generateTokenPair(ctx, a.ID, a.Role, a.Login)
 }
 
 // Refresh валидирует refresh-токен и возвращает новую пару токенов.
@@ -61,7 +61,7 @@ func (s *Service) Refresh(ctx context.Context, refreshToken string) (*TokenRespo
 		return nil, fmt.Errorf("ошибка ротации токена: %w", err)
 	}
 
-	return s.generateTokenPair(ctx, a.ID, a.Role)
+	return s.generateTokenPair(ctx, a.ID, a.Role, a.Login)
 }
 
 // Logout удаляет сессию по refresh-токену.
@@ -158,8 +158,8 @@ func (s *Service) DeleteAdmin(ctx context.Context, callerID, targetID int) error
 }
 
 // generateTokenPair генерирует access-токен и случайный refresh-токен, сохраняя сессию в БД.
-func (s *Service) generateTokenPair(ctx context.Context, adminID int, role string) (*TokenResponse, error) {
-	accessToken, err := s.createAccessToken(adminID, role)
+func (s *Service) generateTokenPair(ctx context.Context, adminID int, role, login string) (*TokenResponse, error) {
+	accessToken, err := s.createAccessToken(adminID, role, login)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка генерации access-токена: %w", err)
 	}
@@ -182,10 +182,11 @@ func (s *Service) generateTokenPair(ctx context.Context, adminID int, role strin
 }
 
 // createAccessToken создаёт JWT access-токен.
-func (s *Service) createAccessToken(adminID int, role string) (string, error) {
+func (s *Service) createAccessToken(adminID int, role, login string) (string, error) {
 	claims := jwt.MapClaims{
 		"adminId": adminID,
 		"role":    role,
+		"login":   login,
 		"type":    "access",
 		"exp":     time.Now().Add(accessTokenTTL).Unix(),
 	}
@@ -234,6 +235,11 @@ func (s *Service) ListRequests(ctx context.Context, status string) ([]requests.R
 // GetRequest возвращает полную карточку заявки по ID.
 func (s *Service) GetRequest(ctx context.Context, id int) (*requests.RequestDetail, error) {
 	return s.requestsRepo.GetByID(ctx, id)
+}
+
+// GetRequestHistory возвращает полный аудит-лог действий администраторов по всем заявкам.
+func (s *Service) GetRequestHistory(ctx context.Context) ([]requests.RequestHistoryItem, error) {
+	return s.requestsRepo.GetHistory(ctx)
 }
 
 // generateAdminLogin генерирует логин вида admin_XxXxXx из 8 случайных букв.
