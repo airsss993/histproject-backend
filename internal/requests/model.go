@@ -33,7 +33,7 @@ type RequestDetail struct {
 	TelegramUsername string    `db:"telegram_username" json:"telegramUsername"`
 	Status           string    `db:"status" json:"status"`
 	AdminComment     *string   `db:"admin_comment" json:"adminComment"`
-	SiteURL          string    `db:"site_url" json:"siteUrl"`
-	ScreenshotURL    string    `db:"screenshot_url" json:"screenshotUrl"`
-	CreatedAt        time.Time `db:"created_at" json:"createdAt"`
+	SiteURL          string    `db:"site_url"       json:"siteUrl"`
+	ScreenshotURL    string    `db:"screenshot_url" json:"-"`
+	CreatedAt        time.Time `db:"created_at"     json:"createdAt"`
 }
