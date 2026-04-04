@@ -105,6 +105,30 @@ func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (
 	return nil
 }
 
+// ReviewRequest переводит заявку в статус 'На проверке' для дальнейшей модерации.
+func (s *Service) ReviewRequest(ctx context.Context, id int, adminLogin, adminRole string) error {
+	// Получаем заявку из БД
+	req, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return errors.New("заявка не найдена")
+	}
+
+	// Брать в проверку можно только заявки со статусом 'Новая'
+	if req.Status != "Новая" {
+		return errors.New("заявка не находится в статусе 'Новая'")
+	}
+
+	// Переводим статус заявки в 'На проверке'
+	if err := s.repo.UpdateStatus(ctx, id, "На проверке", "", req.SiteURL, req.ScreenshotURL); err != nil {
+		return err
+	}
+
+	// Записываем действие в аудит-лог
+	_ = s.repo.LogHistory(ctx, id, adminLogin, adminRole, "Взята на проверку", "")
+
+	return nil
+}
+
 // ApproveRequest одобряет заявку: создаёт объект на карте и переводит статус в 'Опубликована'.
 func (s *Service) ApproveRequest(ctx context.Context, id int, adminLogin, adminRole string, latitude, longitude float64, eventTypeID int) error {
 	// Получаем заявку из БД

@@ -66,6 +66,27 @@ func (h *Handler) CreateRequest(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "success"})
 }
 
+// ReviewRequest берёт заявку в проверку, переводя её статус из 'Новая' в 'На проверке'.
+func (h *Handler) ReviewRequest(c *gin.Context) {
+	// Парсим ID заявки из URL
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID заявки"})
+		return
+	}
+
+	adminLogin := c.GetString("adminLogin")
+	adminRole := c.GetString("role")
+
+	// Берём заявку в проверку
+	if err := h.svc.ReviewRequest(c.Request.Context(), id, adminLogin, adminRole); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
 // ApproveRequestReq — тело запроса на одобрение заявки.
 type ApproveRequestReq struct {
 	Latitude    float64 `json:"latitude"    binding:"required"`
