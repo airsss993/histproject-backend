@@ -203,11 +203,25 @@ func (h *Handler) GetRequest(c *gin.Context) {
 
 // GetRequestHistory возвращает полную историю действий администраторов по всем заявкам.
 func (h *Handler) GetRequestHistory(c *gin.Context) {
-	history, err := h.svc.GetRequestHistory(c.Request.Context())
+	q := c.Query("q")
+
+	// Парсим параметры пагинации
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный параметр page"})
+		return
+	}
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if err != nil || limit < 1 || limit > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Параметр limit должен быть от 1 до 100"})
+		return
+	}
+
+	result, err := h.svc.GetRequestHistory(c.Request.Context(), q, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Ошибка получения истории: " + err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"history": history})
+	c.JSON(http.StatusOK, gin.H{"history": result.Items, "total": result.Total, "page": page, "limit": limit})
 }

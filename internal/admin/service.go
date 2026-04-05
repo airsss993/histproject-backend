@@ -238,8 +238,8 @@ func (s *Service) GetRequest(ctx context.Context, id int) (*requests.RequestDeta
 }
 
 // GetRequestHistory возвращает полный аудит-лог действий администраторов по всем заявкам.
-func (s *Service) GetRequestHistory(ctx context.Context) ([]requests.RequestHistoryItem, error) {
-	return s.requestsRepo.GetHistory(ctx)
+func (s *Service) GetRequestHistory(ctx context.Context, q string, page, limit int) (*requests.HistoryResult, error) {
+	return s.requestsRepo.GetHistory(ctx, q, page, limit)
 }
 
 // generateAdminLogin генерирует логин вида admin_XxXxXx из 8 случайных букв.

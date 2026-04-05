@@ -15,7 +15,7 @@ type RequestRepository interface {
 	List(ctx context.Context, status, q string, page, limit int) (*RequestListResult, error)
 	GetByID(ctx context.Context, id int) (*RequestDetail, error)
 	LogHistory(ctx context.Context, requestID int, adminLogin, adminRole, action, comment string) error
-	GetHistory(ctx context.Context) ([]RequestHistoryItem, error)
+	GetHistory(ctx context.Context, q string, page, limit int) (*HistoryResult, error)
 }
 
 // RequestData — данные заявки для сохранения в БД.
@@ -131,19 +131,38 @@ func (r *repository) LogHistory(ctx context.Context, requestID int, adminLogin, 
 	return nil
 }
 
-func (r *repository) GetHistory(ctx context.Context) ([]RequestHistoryItem, error) {
-	var items []RequestHistoryItem
-	query := `
+func (r *repository) GetHistory(ctx context.Context, q string, page, limit int) (*HistoryResult, error) {
+	var args []interface{}
+	where := ""
+	if q != "" {
+		args = append(args, "%"+q+"%")
+		where = `WHERE (r.title ILIKE $1 OR l.action ILIKE $1 OR l.admin_login ILIKE $1 OR l.request_id::text ILIKE $1) `
+	}
+
+	// Считаем общее количество записей с тем же фильтром
+	var total int
+	countQuery := `SELECT COUNT(*) FROM request_audit_log l JOIN requests r ON r.id = l.request_id ` + where
+	if err := r.db.GetContext(ctx, &total, countQuery, args...); err != nil {
+		return nil, fmt.Errorf("ошибка подсчёта истории: %w", err)
+	}
+
+	// Основной запрос с пагинацией
+	offset := (page - 1) * limit
+	query := fmt.Sprintf(`
 		SELECT l.id, l.request_id, r.title AS request_title, l.action, l.comment, l.admin_login, l.admin_role, l.created_at
 		FROM request_audit_log l
 		JOIN requests r ON r.id = l.request_id
-		ORDER BY l.created_at DESC`
-	err := r.db.SelectContext(ctx, &items, query)
-	if err != nil {
+		%sORDER BY l.created_at DESC LIMIT $%d OFFSET $%d`,
+		where, len(args)+1, len(args)+2,
+	)
+	args = append(args, limit, offset)
+
+	var items []RequestHistoryItem
+	if err := r.db.SelectContext(ctx, &items, query, args...); err != nil {
 		return nil, fmt.Errorf("ошибка получения истории действий: %w", err)
 	}
 	if items == nil {
-		return []RequestHistoryItem{}, nil
+		items = []RequestHistoryItem{}
 	}
-	return items, nil
+	return &HistoryResult{Items: items, Total: total}, nil
 }

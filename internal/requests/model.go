@@ -16,6 +16,12 @@ type RequestListResult struct {
 	Total int
 }
 
+// HistoryResult — результат запроса истории с метаданными пагинации.
+type HistoryResult struct {
+	Items []RequestHistoryItem
+	Total int
+}
+
 // RequestHistoryItem — запись аудит-лога действия администратора над заявкой.
 type RequestHistoryItem struct {
 	ID           int       `db:"id"            json:"id"`
