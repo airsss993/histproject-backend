@@ -173,7 +173,9 @@ func (h *Handler) GetRequests(c *gin.Context) {
 		return
 	}
 
-	result, err := h.svc.ListRequests(c.Request.Context(), status, page, limit)
+	q := c.Query("q")
+
+	result, err := h.svc.ListRequests(c.Request.Context(), status, q, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Ошибка получения списка заявок: " + err.Error()})
 		return

@@ -3,6 +3,7 @@ package requests
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -11,7 +12,7 @@ import (
 type RequestRepository interface {
 	Create(ctx context.Context, data RequestData) (int, error)
 	UpdateStatus(ctx context.Context, id int, status, comment, siteURL, screenshotURL string) error
-	List(ctx context.Context, status string, page, limit int) (*RequestListResult, error)
+	List(ctx context.Context, status, q string, page, limit int) (*RequestListResult, error)
 	GetByID(ctx context.Context, id int) (*RequestDetail, error)
 	LogHistory(ctx context.Context, requestID int, adminLogin, adminRole, action, comment string) error
 	GetHistory(ctx context.Context) ([]RequestHistoryItem, error)
@@ -65,28 +66,36 @@ func (r *repository) UpdateStatus(ctx context.Context, id int, status, comment, 
 	return nil
 }
 
-func (r *repository) List(ctx context.Context, status string, page, limit int) (*RequestListResult, error) {
+func (r *repository) List(ctx context.Context, status, q string, page, limit int) (*RequestListResult, error) {
+	var clauses []string
 	var args []interface{}
-	where := ""
+
 	if status != "" {
-		where = ` WHERE status = $1`
 		args = append(args, status)
+		clauses = append(clauses, fmt.Sprintf("status = $%d", len(args)))
+	}
+	if q != "" {
+		args = append(args, "%"+q+"%")
+		n := len(args)
+		clauses = append(clauses, fmt.Sprintf("(title ILIKE $%d OR id::text ILIKE $%d)", n, n))
+	}
+
+	where := ""
+	if len(clauses) > 0 {
+		where = " WHERE " + strings.Join(clauses, " AND ")
 	}
 
 	// Считаем общее количество записей с тем же фильтром
 	var total int
-	countQuery := `SELECT COUNT(*) FROM requests` + where
-	if err := r.db.GetContext(ctx, &total, countQuery, args...); err != nil {
+	if err := r.db.GetContext(ctx, &total, `SELECT COUNT(*) FROM requests`+where, args...); err != nil {
 		return nil, fmt.Errorf("ошибка подсчёта заявок: %w", err)
 	}
 
 	// Основной запрос с пагинацией
 	offset := (page - 1) * limit
-	limitArg := len(args) + 1
-	offsetArg := len(args) + 2
 	query := fmt.Sprintf(
 		`SELECT id, title, status, created_at FROM requests%s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
-		where, limitArg, offsetArg,
+		where, len(args)+1, len(args)+2,
 	)
 	args = append(args, limit, offset)
 
