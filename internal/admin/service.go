@@ -227,9 +227,9 @@ func generateRandomPassword(length int) (string, error) {
 	return string(raw), nil
 }
 
-// ListRequests возвращает список заявок с опциональным фильтром по статусу.
-func (s *Service) ListRequests(ctx context.Context, status string) ([]requests.RequestListItem, error) {
-	return s.requestsRepo.List(ctx, status)
+// ListRequests возвращает список заявок с опциональным фильтром по статусу и пагинацией.
+func (s *Service) ListRequests(ctx context.Context, status string, page, limit int) (*requests.RequestListResult, error) {
+	return s.requestsRepo.List(ctx, status, page, limit)
 }
 
 // GetRequest возвращает полную карточку заявки по ID.

@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 // Handler — HTTP-обработчики аутентификации администраторов.
 type Handler struct {
 	svc *Service
@@ -152,7 +151,7 @@ func clearTokenCookies(c *gin.Context) {
 
 var validRequestStatuses = []string{"В обработке", "Новая", "На проверке", "Отклонена", "Опубликована"}
 
-// GetRequests возвращает список заявок с опциональным фильтром по статусу.
+// GetRequests возвращает список заявок с опциональным фильтром по статусу и пагинацией.
 func (h *Handler) GetRequests(c *gin.Context) {
 	status := c.Query("status")
 
@@ -162,13 +161,25 @@ func (h *Handler) GetRequests(c *gin.Context) {
 		return
 	}
 
-	list, err := h.svc.ListRequests(c.Request.Context(), status)
+	// Парсим параметры пагинации
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный параметр page"})
+		return
+	}
+	limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if err != nil || limit < 1 || limit > 100 {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Параметр limit должен быть от 1 до 100"})
+		return
+	}
+
+	result, err := h.svc.ListRequests(c.Request.Context(), status, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "Ошибка получения списка заявок: " + err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"requests": list})
+	c.JSON(http.StatusOK, gin.H{"requests": result.Items, "total": result.Total, "page": page, "limit": limit})
 }
 
 // GetRequest возвращает полную карточку заявки по ID.

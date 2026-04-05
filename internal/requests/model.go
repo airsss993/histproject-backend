@@ -10,6 +10,12 @@ type RequestListItem struct {
 	CreatedAt time.Time `db:"created_at" json:"createdAt"`
 }
 
+// RequestListResult — результат запроса списка заявок с метаданными пагинации.
+type RequestListResult struct {
+	Items []RequestListItem
+	Total int
+}
+
 // RequestHistoryItem — запись аудит-лога действия администратора над заявкой.
 type RequestHistoryItem struct {
 	ID           int       `db:"id"            json:"id"`
