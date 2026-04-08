@@ -121,6 +121,41 @@ func (h *Handler) ApproveRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
+// PublishRequestReq — тело запроса на публикацию заявки.
+type PublishRequestReq struct {
+	Latitude  float64 `json:"latitude"  binding:"required"`
+	Longitude float64 `json:"longitude" binding:"required"`
+}
+
+// PublishRequest публикует одобренную заявку, создавая объект на карте и переводя статус в 'Опубликована'.
+func (h *Handler) PublishRequest(c *gin.Context) {
+	// Парсим ID заявки из URL
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID заявки"})
+		return
+	}
+
+	// Парсим тело запроса
+	var req PublishRequestReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка валидации: " + err.Error()})
+		return
+	}
+
+	adminLogin := c.GetString("adminLogin")
+	adminRole := c.GetString("role")
+
+	// Публикуем заявку
+	err = h.svc.PublishRequest(c.Request.Context(), id, adminLogin, adminRole, req.Latitude, req.Longitude)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
 // RejectRequestReq — тело запроса на отклонение заявки.
 type RejectRequestReq struct {
 	Comment string `json:"comment" binding:"required"`

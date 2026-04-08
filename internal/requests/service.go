@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/airsss993/histproject-backend/internal/notifications"
+	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/hibiken/asynq"
 )
 
@@ -31,16 +32,18 @@ type Service struct {
 	storage       StorageWriter
 	queue         QueueEnqueuer
 	taskBuilder   TaskBuilder
+	objectsRepo   objects.Repository
 	notifications *notifications.Service
 }
 
 // NewService создаёт сервис заявок.
-func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder, notifications *notifications.Service) *Service {
+func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder, objectsRepo objects.Repository, notifications *notifications.Service) *Service {
 	return &Service{
 		repo:          repo,
 		storage:       storage,
 		queue:         queue,
 		taskBuilder:   taskBuilder,
+		objectsRepo:   objectsRepo,
 		notifications: notifications,
 	}
 }
@@ -150,7 +153,46 @@ func (s *Service) ApproveRequest(ctx context.Context, id int, adminLogin, adminR
 	// Записываем действие в аудит-лог
 	_ = s.repo.LogHistory(ctx, id, adminLogin, adminRole, "Одобрена", "")
 
-	// Уведомляем пользователя об одобрении заявки
+	return nil
+}
+
+// PublishRequest публикует одобренную заявку: создаёт объект на карте и переводит статус в 'Опубликована'.
+func (s *Service) PublishRequest(ctx context.Context, id int, adminLogin, adminRole string, latitude, longitude float64) error {
+	// Получаем заявку из БД
+	req, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return errors.New("заявка не найдена")
+	}
+
+	// Публиковать можно только заявки со статусом 'Одобрена'
+	if req.Status != "Одобрена" {
+		return errors.New("заявка не находится в статусе 'Одобрена'")
+	}
+
+	// Создаём объект на карте
+	if err := s.objectsRepo.CreateObject(ctx, objects.ObjectData{
+		RequestID:       req.ID,
+		Title:           req.Title,
+		Description:     req.Description,
+		Latitude:        latitude,
+		Longitude:       longitude,
+		EventDate:       req.EventDate,
+		EventTypeID:     req.EventTypeID,
+		SiteURL:         req.SiteURL,
+		PreviewImageURL: req.ScreenshotURL,
+	}); err != nil {
+		return err
+	}
+
+	// Переводим статус заявки в 'Опубликована'
+	if err := s.repo.UpdateStatus(ctx, id, "Опубликована", "", req.SiteURL, req.ScreenshotURL); err != nil {
+		return err
+	}
+
+	// Записываем действие в аудит-лог
+	_ = s.repo.LogHistory(ctx, id, adminLogin, adminRole, "Опубликована", "")
+
+	// Уведомляем пользователя о публикации заявки
 	s.notifications.OnApproved(ctx, req.ID, req.Title, req.Email, req.TelegramUsername, req.SiteURL)
 	return nil
 }
