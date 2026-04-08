@@ -645,7 +645,7 @@ GET /api/objects?eventTypeIds=2&amp;dateFrom=2015-01-01&amp;dateTo=2020-01-01</p
         <tr>
           <td>status<span class="optional-mark">?</span></td>
           <td>string</td>
-          <td>Фильтр по статусу. Возможные значения: <code>В обработке</code>, <code>Новая</code>, <code>На проверке</code>, <code>Отклонена</code>, <code>Опубликована</code></td>
+Фильтр по статусу. Возможные значения: <code>В обработке</code>, <code>Новая</code>, <code>На проверке</code>, <code>Отклонена</code>, <code>Одобрена</code>, <code>Опубликована</code>
           <td>нет</td>
         </tr>
         <tr>
@@ -785,7 +785,7 @@ GET /api/admin/requests?status=Новая&amp;page=2&amp;limit=10</pre>
       <span class="lock-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT</span>
     </div>
     <div class="card-body">
-      <p class="desc">Одобрить заявку и опубликовать объект на карте. Допустимый переход: <code>На проверке</code> → <code>Опубликована</code>.</p>
+      <p class="desc">Одобрить заявку. Допустимый переход: <code>На проверке</code> → <code>Одобрена</code>.</p>
 
       <div class="section-label">Path-параметры</div>
       <table>
@@ -802,28 +802,14 @@ GET /api/admin/requests?status=Новая&amp;page=2&amp;limit=10</pre>
       <table>
         <tr><th>Поле</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
         <tr>
-          <td>latitude<span class="required-mark">*</span></td>
-          <td>float</td>
-          <td>Широта объекта на карте (−90 … 90)</td>
-          <td>да</td>
-        </tr>
-        <tr>
-          <td>longitude<span class="required-mark">*</span></td>
-          <td>float</td>
-          <td>Долгота объекта на карте (−180 … 180)</td>
-          <td>да</td>
-        </tr>
-        <tr>
           <td>eventTypeId<span class="required-mark">*</span></td>
           <td>int</td>
-          <td>ID типа события (можно изменить относительно заявки)</td>
+          <td>ID типа события</td>
           <td>да</td>
         </tr>
       </table>
 
       <pre>{
-  <span class="key">"latitude"</span>:    <span class="num">55.7308</span>,
-  <span class="key">"longitude"</span>:   <span class="num">37.6174</span>,
   <span class="key">"eventTypeId"</span>: <span class="num">2</span>
 }</pre>
 
