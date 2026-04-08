@@ -89,12 +89,10 @@ func (h *Handler) ReviewRequest(c *gin.Context) {
 
 // ApproveRequestReq — тело запроса на одобрение заявки.
 type ApproveRequestReq struct {
-	Latitude    float64 `json:"latitude"    binding:"required"`
-	Longitude   float64 `json:"longitude"   binding:"required"`
-	EventTypeId int     `json:"eventTypeId" binding:"required,gt=0"`
+	EventTypeId int `json:"eventTypeId" binding:"required,gt=0"`
 }
 
-// ApproveRequest одобряет заявку и публикует объект на карте.
+// ApproveRequest одобряет заявку, переводя её статус в 'Одобрена'.
 func (h *Handler) ApproveRequest(c *gin.Context) {
 	// Парсим ID заявки из URL
 	id, err := strconv.Atoi(c.Param("id"))
@@ -114,7 +112,7 @@ func (h *Handler) ApproveRequest(c *gin.Context) {
 	adminRole := c.GetString("role")
 
 	// Одобряем заявку
-	err = h.svc.ApproveRequest(c.Request.Context(), id, adminLogin, adminRole, req.Latitude, req.Longitude, req.EventTypeId)
+	err = h.svc.ApproveRequest(c.Request.Context(), id, adminLogin, adminRole, req.EventTypeId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return

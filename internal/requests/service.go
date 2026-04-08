@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/airsss993/histproject-backend/internal/notifications"
-	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/hibiken/asynq"
 )
 
@@ -32,18 +31,16 @@ type Service struct {
 	storage       StorageWriter
 	queue         QueueEnqueuer
 	taskBuilder   TaskBuilder
-	objectsRepo   objects.Repository
 	notifications *notifications.Service
 }
 
 // NewService создаёт сервис заявок.
-func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder, objectsRepo objects.Repository, notifications *notifications.Service) *Service {
+func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder, notifications *notifications.Service) *Service {
 	return &Service{
 		repo:          repo,
 		storage:       storage,
 		queue:         queue,
 		taskBuilder:   taskBuilder,
-		objectsRepo:   objectsRepo,
 		notifications: notifications,
 	}
 }
@@ -62,7 +59,7 @@ type CreateRequestInput struct {
 // CreateRequest создаёт заявку: проверяет архив, загружает, сохраняет в БД, ставит задачу в очередь.
 func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (err error) {
 	// Проверяем, что файл — zip и не больше 50 МБ
-	if !strings.Contains(input.Archive.Filename, ".zip") {
+	if !strings.HasSuffix(input.Archive.Filename, ".zip") {
 		return ErrArchiveMustBeZip
 	}
 	if input.Archive.Size > maxArchiveSize {
@@ -132,8 +129,8 @@ func (s *Service) ReviewRequest(ctx context.Context, id int, adminLogin, adminRo
 	return nil
 }
 
-// ApproveRequest одобряет заявку: создаёт объект на карте и переводит статус в 'Опубликована'.
-func (s *Service) ApproveRequest(ctx context.Context, id int, adminLogin, adminRole string, latitude, longitude float64, eventTypeID int) error {
+// ApproveRequest одобряет заявку: переводит статус в 'Одобрена'.
+func (s *Service) ApproveRequest(ctx context.Context, id int, adminLogin, adminRole string, eventTypeID int) error {
 	// Получаем заявку из БД
 	req, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -145,23 +142,8 @@ func (s *Service) ApproveRequest(ctx context.Context, id int, adminLogin, adminR
 		return errors.New("заявка не находится в статусе 'На проверке'")
 	}
 
-	// Создаём объект на карте
-	if err := s.objectsRepo.CreateObject(ctx, objects.ObjectData{
-		RequestID:       req.ID,
-		Title:           req.Title,
-		Description:     req.Description,
-		Latitude:        latitude,
-		Longitude:       longitude,
-		EventDate:       req.EventDate,
-		EventTypeID:     eventTypeID,
-		SiteURL:         req.SiteURL,
-		PreviewImageURL: req.ScreenshotURL,
-	}); err != nil {
-		return err
-	}
-
-	// Переводим статус заявки в 'Опубликована'
-	if err := s.repo.UpdateStatus(ctx, id, "Опубликована", "", req.SiteURL, req.ScreenshotURL); err != nil {
+	// Переводим статус заявки в 'Одобрена'
+	if err := s.repo.UpdateStatus(ctx, id, "Одобрена", "", req.SiteURL, req.ScreenshotURL); err != nil {
 		return err
 	}
 

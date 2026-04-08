@@ -66,8 +66,8 @@ func (h *Handler) Logout(c *gin.Context) {
 }
 
 func setTokenCookies(c *gin.Context, tokens *TokenResponse) {
-	c.SetCookie("access_token", tokens.AccessToken, 15*60, "/", "", false, true)
-	c.SetCookie("refresh_token", tokens.RefreshToken, 7*24*60*60, "/api/admin/", "", false, true)
+	c.SetCookie("access_token", tokens.AccessToken, 15*60, "/", "", true, true)
+	c.SetCookie("refresh_token", tokens.RefreshToken, 7*24*60*60, "/api/admin/", "", true, true)
 }
 
 // CreateAdmin создаёт нового администратора и возвращает сгенерированные login/password.
@@ -149,7 +149,7 @@ func clearTokenCookies(c *gin.Context) {
 	c.SetCookie("refresh_token", "", -1, "/api/admin/", "", false, true)
 }
 
-var validRequestStatuses = []string{"В обработке", "Новая", "На проверке", "Отклонена", "Опубликована"}
+var validRequestStatuses = []string{"В обработке", "Новая", "На проверке", "Отклонена", "Одобрена", "Опубликована"}
 
 // GetRequests возвращает список заявок с опциональным фильтром по статусу и пагинацией.
 func (h *Handler) GetRequests(c *gin.Context) {
