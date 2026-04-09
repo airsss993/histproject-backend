@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/airsss993/histproject-backend/internal/admin"
 	"github.com/airsss993/histproject-backend/internal/config"
@@ -73,15 +74,14 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 
 func corsMiddleware(allowedOrigins string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//origin := c.Request.Header.Get("Origin")
-		//
-		//if origin != "" && strings.Contains(allowedOrigins, origin) {
-		//	c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
-		//	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		//}
+		origin := c.Request.Header.Get("Origin")
 
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		if origin != "" && strings.Contains(allowedOrigins, origin) {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		} else if allowedOrigins == "" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
