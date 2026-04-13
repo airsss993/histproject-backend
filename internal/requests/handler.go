@@ -5,6 +5,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -44,7 +45,7 @@ func (h *Handler) CreateRequest(c *gin.Context) {
 		EventDate:        req.EventDate,
 		EventTypeId:      req.EventTypeId,
 		Email:            req.Email,
-		TelegramUsername: req.TelegramUsername,
+		TelegramUsername: strings.TrimPrefix(req.TelegramUsername, "@"),
 		Archive:          req.Archive,
 	}
 
