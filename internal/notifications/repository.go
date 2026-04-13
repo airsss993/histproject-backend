@@ -33,7 +33,7 @@ func (r *Repository) GetAdminEmails(ctx context.Context) ([]string, error) {
 // GetChatID возвращает chatId по username. Если подписки нет — возвращает nil.
 func (r *Repository) GetChatID(ctx context.Context, username string) (*int64, error) {
 	var chatID int64
-	query := `SELECT chat_id FROM bot_subscriptions WHERE username = $1`
+	query := `SELECT chat_id FROM telegram_subscriptions WHERE telegram_username = $1`
 	err := r.db.GetContext(ctx, &chatID, query, username)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
