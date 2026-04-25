@@ -31,6 +31,7 @@ type (
 
 	Database struct {
 		DSN string
+		Env string
 	}
 
 	Storage struct {
@@ -79,7 +80,15 @@ func setFromEnv(cfg *Config) error {
 
 	cfg.Auth.JWTSecret = os.Getenv("JWT_SECRET")
 
-	cfg.Database.DSN = os.Getenv("PG_DSN")
+	cfg.Database.Env = os.Getenv("APP_ENV")
+	switch cfg.Database.Env {
+	case "prod":
+		cfg.Database.DSN = os.Getenv("PG_DSN_PROD")
+	case "dev":
+		cfg.Database.DSN = os.Getenv("PG_DSN_DEV")
+	default:
+		cfg.Database.DSN = os.Getenv("PG_DSN")
+	}
 	cfg.CORS.AllowedOrigins = os.Getenv("CORS_ALLOWED_ORIGINS")
 	cfg.N8N.WebhookURL = os.Getenv("N8N_WEBHOOK_URL")
 	cfg.N8N.WebhookSecret = os.Getenv("N8N_WEBHOOK_SECRET")
@@ -105,7 +114,14 @@ func setFromEnv(cfg *Config) error {
 	}
 
 	if cfg.Database.DSN == "" {
-		return errors.New("PG_DSN должно быть указано")
+		switch cfg.Database.Env {
+		case "prod":
+			return errors.New("PG_DSN_PROD должно быть указано при APP_ENV=prod")
+		case "dev":
+			return errors.New("PG_DSN_DEV должно быть указано при APP_ENV=dev")
+		default:
+			return errors.New("PG_DSN должно быть указано (или укажите APP_ENV=dev/prod и соответствующий DSN)")
+		}
 	}
 	if cfg.Storage.MinioEndpoint == "" {
 		return errors.New("MINIO_ENDPOINT должно быть указано")
