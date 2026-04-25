@@ -69,3 +69,24 @@ func (m *MinioClient) UploadFileSites(reader io.Reader, size int64, key string) 
 
 	return nil
 }
+
+// DeleteSiteFolder удаляет все файлы папки {requestID}/ из бакета sites.
+func (m *MinioClient) DeleteSiteFolder(requestID int) error {
+	ctx := context.Background()
+	prefix := fmt.Sprintf("%d/", requestID)
+
+	// Собираем ключи всех объектов с нужным префиксом
+	objectsCh := m.mc.ListObjects(ctx, SitesBucketName, minio.ListObjectsOptions{Prefix: prefix, Recursive: true})
+
+	var removeErr error
+	for object := range objectsCh {
+		if object.Err != nil {
+			return fmt.Errorf("ошибка перечисления файлов сайта: %w", object.Err)
+		}
+		if err := m.mc.RemoveObject(ctx, SitesBucketName, object.Key, minio.RemoveObjectOptions{}); err != nil {
+			removeErr = fmt.Errorf("ошибка удаления файла %s: %w", object.Key, err)
+		}
+	}
+
+	return removeErr
+}

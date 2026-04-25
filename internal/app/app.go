@@ -51,7 +51,7 @@ func Run() {
 	}
 
 	objectsRepo := objects.NewRepository(conn)
-	objectsSvc := objects.NewService(objectsRepo)
+	objectsSvc := objects.NewService(objectsRepo, minioClient)
 	objectsHandler := objects.NewHandler(objectsSvc)
 
 	// Инициализация модуля admin

@@ -345,6 +345,10 @@
   <a href="#requests-reject"><span class="badge patch">PATCH</span>Отклонить заявку</a>
   <a href="#requests-history"><span class="badge get">GET</span>История действий</a>
 
+  <div class="section-title">Объекты на карте</div>
+  <a href="#delete-object"><span class="badge del">DEL</span>Удалить метку</a>
+  <a href="#update-object-coordinates"><span class="badge patch">PATCH</span>Обновить координаты</a>
+
   <div class="section-title">Управление</div>
   <a href="#list-admins"><span class="badge get">GET</span>Список админов</a>
   <a href="#create-admin"><span class="badge post">POST</span>Создать админа</a>
@@ -1069,6 +1073,102 @@ GET /api/admin/requests?status=Новая&amp;page=2&amp;limit=10</pre>
         <tr><td>400</td><td>Некорректная роль</td></tr>
         <tr><td>401</td><td>Невалидный access_token</td></tr>
         <tr><td>403</td><td>Недостаточно прав (требуется super_admin)</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Удалить метку с карты ── -->
+  <div class="endpoint-card section-anchor" id="delete-object">
+    <div class="card-header">
+      <span class="method del">DELETE</span>
+      <span class="path">/admin/requests/<span class="param">:id</span>/object</span>
+      <span class="lock-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT</span>
+    </div>
+    <div class="card-body">
+      <p class="desc">Удаление метки с карты, созданной из заявки. Доступно всем авторизованным администраторам.</p>
+
+      <div class="section-label">Path-параметры</div>
+      <table>
+        <tr><th>Параметр</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
+        <tr>
+          <td>id<span class="required-mark">*</span></td>
+          <td>int</td>
+          <td>ID заявки</td>
+          <td>да</td>
+        </tr>
+      </table>
+
+      <div class="section-label">Пример</div>
+      <pre>DELETE /api/admin/requests/42/object</pre>
+
+      <div class="section-label">Ответ 200</div>
+      <pre>{ <span class="key">"message"</span>: <span class="str">"success"</span> }</pre>
+
+      <div class="section-label">Ошибки</div>
+      <table>
+        <tr><th>Статус</th><th>Причина</th></tr>
+        <tr><td>400</td><td>Некорректный ID</td></tr>
+        <tr><td>400</td><td>Объект для заявки не найден</td></tr>
+        <tr><td>401</td><td>Невалидный access_token</td></tr>
+        <tr><td>403</td><td>Недостаточно прав</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Обновить координаты метки ── -->
+  <div class="endpoint-card section-anchor" id="update-object-coordinates">
+    <div class="card-header">
+      <span class="method patch">PATCH</span>
+      <span class="path">/admin/requests/<span class="param">:id</span>/object/coordinates</span>
+      <span class="lock-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT</span>
+    </div>
+    <div class="card-body">
+      <p class="desc">Обновление координат метки на карте, привязанной к заявке. Доступно всем авторизованным администраторам.</p>
+
+      <div class="section-label">Path-параметры</div>
+      <table>
+        <tr><th>Параметр</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
+        <tr>
+          <td>id<span class="required-mark">*</span></td>
+          <td>int</td>
+          <td>ID заявки</td>
+          <td>да</td>
+        </tr>
+      </table>
+
+      <div class="section-label">Тело запроса — application/json</div>
+      <table>
+        <tr><th>Поле</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
+        <tr>
+          <td>latitude<span class="required-mark">*</span></td>
+          <td>float</td>
+          <td>Широта (например, 55.751244)</td>
+          <td>да</td>
+        </tr>
+        <tr>
+          <td>longitude<span class="required-mark">*</span></td>
+          <td>float</td>
+          <td>Долгота (например, 37.618423)</td>
+          <td>да</td>
+        </tr>
+      </table>
+
+      <pre>{
+  <span class="key">"latitude"</span>:  <span class="num">55.751244</span>,
+  <span class="key">"longitude"</span>: <span class="num">37.618423</span>
+}</pre>
+
+      <div class="section-label">Ответ 200</div>
+      <pre>{ <span class="key">"message"</span>: <span class="str">"success"</span> }</pre>
+
+      <div class="section-label">Ошибки</div>
+      <table>
+        <tr><th>Статус</th><th>Причина</th></tr>
+        <tr><td>400</td><td>Некорректный ID</td></tr>
+        <tr><td>400</td><td>Объект для заявки не найден</td></tr>
+        <tr><td>400</td><td>Ошибка валидации тела запроса</td></tr>
+        <tr><td>401</td><td>Невалидный access_token</td></tr>
+        <tr><td>403</td><td>Недостаточно прав</td></tr>
       </table>
     </div>
   </div>

@@ -74,3 +74,52 @@ func (h *Handler) GetObjectsList(c *gin.Context) {
 	c.JSON(http.StatusOK, GetObjectsListResp{Objects: list})
 }
 
+// DeleteObject удаляет объект (метку) с карты по ID заявки.
+func (h *Handler) DeleteObject(c *gin.Context) {
+	// Парсим ID заявки из URL
+	requestID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID заявки"})
+		return
+	}
+
+	// Удаляем объект, привязанный к заявке
+	if err := h.svc.DeleteObject(c.Request.Context(), requestID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
+// UpdateCoordinatesReq — тело запроса на обновление координат.
+type UpdateCoordinatesReq struct {
+	Latitude  float64 `json:"latitude"  binding:"required"`
+	Longitude float64 `json:"longitude" binding:"required"`
+}
+
+// UpdateCoordinates обновляет координаты метки по ID заявки.
+func (h *Handler) UpdateCoordinates(c *gin.Context) {
+	// Парсим ID заявки из URL
+	requestID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID заявки"})
+		return
+	}
+
+	// Парсим новые координаты из тела запроса
+	var req UpdateCoordinatesReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка валидации: " + err.Error()})
+		return
+	}
+
+	// Обновляем координаты объекта, привязанного к заявке
+	if err := h.svc.UpdateCoordinates(c.Request.Context(), requestID, req.Latitude, req.Longitude); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+

@@ -13,6 +13,8 @@ type Repository interface {
 	GetByID(ctx context.Context, id int) (*SingleObjectInfo, error)
 	List(ctx context.Context, eventTypeIDs []int, dateFrom, dateTo string) ([]ObjectInfo, error)
 	CreateObject(ctx context.Context, data ObjectData) error
+	DeleteObject(ctx context.Context, requestID int) error
+	UpdateCoordinates(ctx context.Context, requestID int, latitude, longitude float64) error
 }
 
 type repository struct {
@@ -89,6 +91,46 @@ func (r *repository) CreateObject(ctx context.Context, data ObjectData) error {
 	)
 	if err != nil {
 		return fmt.Errorf("ошибка создания объекта на карте: %w", err)
+	}
+	return nil
+}
+
+func (r *repository) DeleteObject(ctx context.Context, requestID int) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("ошибка начала транзакции: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Удаляем метку с карты
+	res, err := tx.ExecContext(ctx, `DELETE FROM objects WHERE request_id = $1`, requestID)
+	if err != nil {
+		return fmt.Errorf("ошибка удаления объекта: %w", err)
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("объект для заявки не найден")
+	}
+
+	// Удаляем саму заявку (аудит-лог удалится каскадно)
+	if _, err := tx.ExecContext(ctx, `DELETE FROM requests WHERE id = $1`, requestID); err != nil {
+		return fmt.Errorf("ошибка удаления заявки: %w", err)
+	}
+
+	return tx.Commit()
+}
+
+func (r *repository) UpdateCoordinates(ctx context.Context, requestID int, latitude, longitude float64) error {
+	res, err := r.db.ExecContext(ctx,
+		`UPDATE objects SET latitude = $1, longitude = $2 WHERE request_id = $3`,
+		latitude, longitude, requestID,
+	)
+	if err != nil {
+		return fmt.Errorf("ошибка обновления координат: %w", err)
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return fmt.Errorf("объект для заявки не найден")
 	}
 	return nil
 }

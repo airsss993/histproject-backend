@@ -64,6 +64,10 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 		adminGroup.PATCH("/requests/:id/publish", admin.RequireRole("admin", "super_admin"), h.Requests.PublishRequest)
 		adminGroup.PATCH("/requests/:id/reject", admin.RequireRole("admin", "super_admin"), h.Requests.RejectRequest)
 
+		// Управление объектами на карте — любой авторизованный админ
+		adminGroup.DELETE("/requests/:id/object", admin.RequireRole("admin", "super_admin"), h.Objects.DeleteObject)
+		adminGroup.PATCH("/requests/:id/object/coordinates", admin.RequireRole("admin", "super_admin"), h.Objects.UpdateCoordinates)
+
 		// Управление админами — только super_admin
 		adminGroup.GET("/admins", admin.RequireRole("super_admin"), h.Admin.ListAdmins)
 		adminGroup.POST("/admins", admin.RequireRole("super_admin"), h.Admin.CreateAdmin)
