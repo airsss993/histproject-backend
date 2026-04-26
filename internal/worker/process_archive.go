@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -58,6 +59,8 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 		return fmt.Errorf("ошибка при разборе полезной нагрузки задачи: %w", err)
 	}
 
+	log.Printf("[worker] requestId=%d archiveId=%s: начало обработки", payload.RequestId, payload.ArchiveId)
+
 	// Получение архива из хранилища по ID архива
 	archive, _, err := w.storage.GetArchive(payload.ArchiveId)
 	if err != nil {
@@ -66,25 +69,32 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 	defer archive.Close()
 
 	if w.cfg.App.ClamAVEnabled {
+		log.Printf("[worker] requestId=%d: проверка на вирусы", payload.RequestId)
 		if err := w.checkArchiveForViruses(archive); err != nil {
+			log.Printf("[worker] requestId=%d: обнаружен вирус: %v", payload.RequestId, err)
 			_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Отклонена", "Обнаружен вирус", "", "")
 			return nil
 		}
 	}
 
+	log.Printf("[worker] requestId=%d: распаковка архива", payload.RequestId)
 	if err := w.unzipArchive(payload.RequestId, payload.ArchiveId); err != nil {
+		log.Printf("[worker] requestId=%d: ошибка распаковки: %v", payload.RequestId, err)
 		_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Отклонена", "Отсутствует index.html", "", "")
 		return nil
 	}
 
+	log.Printf("[worker] requestId=%d: создание скриншота", payload.RequestId)
 	w.chromeMu.Lock()
 	screenshotUrl, err := w.createScreenshot(payload.RequestId)
 	w.chromeMu.Unlock()
 	if err != nil {
+		log.Printf("[worker] requestId=%d: ошибка скриншота: %v", payload.RequestId, err)
 		return fmt.Errorf("ошибка при создании скриншота: %w", err)
 	}
 
 	siteUrl := fmt.Sprintf("https://%s/sites/%d/index.html", w.cfg.Storage.MinioPublicUrl, payload.RequestId)
+	log.Printf("[worker] requestId=%d: готово, siteUrl=%s screenshotUrl=%s", payload.RequestId, siteUrl, screenshotUrl)
 	_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Новая", "", siteUrl, screenshotUrl)
 
 	return nil
@@ -112,17 +122,20 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 	var result map[string]string
 	json.Unmarshal(body, &result)
 
-	// Резолвим IP контейнера Chrome через Docker DNS и подключаемся напрямую к порту 9223.
-	// Chrome отвергает WebSocket-соединения, где Host-заголовок содержит hostname (не IP),
-	// поэтому используем IP-адрес контейнера вместо имени сервиса.
-	chromeHost := strings.Split(chromeAddr, ":")[0]
-	addrs, err := net.LookupHost(chromeHost)
-	if err != nil || len(addrs) == 0 {
-		return "", fmt.Errorf("ошибка определения IP Chrome: %w", err)
+	// Запускаем локальный TCP-прокси 127.0.0.1:RANDOM → chromeAddr.
+	// Chrome отвергает WebSocket-соединения с hostname в Host-заголовке (например "chrome:9222"),
+	// но принимает IP-адреса. Прокси позволяет использовать "127.0.0.1:RANDOM" в URL.
+	proxyAddr, stopProxy, err := startLocalProxy(chromeAddr)
+	if err != nil {
+		return "", fmt.Errorf("ошибка запуска прокси к Chrome: %w", err)
 	}
+	defer stopProxy()
+	log.Printf("[worker] createScreenshot: proxy %s → %s", proxyAddr, chromeAddr)
+
 	parsedWsURL, _ := url.Parse(result["webSocketDebuggerUrl"])
-	parsedWsURL.Host = addrs[0] + ":9223"
+	parsedWsURL.Host = proxyAddr
 	wsURL := parsedWsURL.String()
+	log.Printf("[worker] createScreenshot: wsURL=%s", wsURL)
 
 	// Создание контекста для chromedp
 	allocatorContext, cancel := chromedp.NewRemoteAllocator(
@@ -232,6 +245,38 @@ func (w *Worker) unzipArchive(requestID int, archiveID string) error {
 	}
 
 	return nil
+}
+
+// startLocalProxy запускает TCP-прокси на случайном порту 127.0.0.1 и пробрасывает соединения на targetAddr.
+func startLocalProxy(targetAddr string) (localAddr string, stop func(), err error) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return "", nil, err
+	}
+	go func() {
+		for {
+			conn, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			go proxyConn(conn, targetAddr)
+		}
+	}()
+	return ln.Addr().String(), func() { ln.Close() }, nil
+}
+
+// proxyConn пробрасывает трафик между src и targetAddr.
+func proxyConn(src net.Conn, targetAddr string) {
+	defer src.Close()
+	dst, err := net.Dial("tcp", targetAddr)
+	if err != nil {
+		return
+	}
+	defer dst.Close()
+	done := make(chan struct{}, 2)
+	go func() { io.Copy(dst, src); done <- struct{}{} }()
+	go func() { io.Copy(src, dst); done <- struct{}{} }()
+	<-done
 }
 
 // checkArchiveForViruses - функция для проверки архива на вирусы с помощью ClamAV
