@@ -115,6 +115,12 @@ services:
 
   chrome:
     image: chromedp/headless-shell:latest
+    entrypoint: >
+      /bin/sh -c '
+      /headless-shell/headless-shell --no-sandbox --use-gl=angle --use-angle=swiftshader
+      --remote-debugging-address=0.0.0.0 --remote-debugging-port=9223 --remote-allow-origins=* &
+      exec socat TCP4-LISTEN:9222,fork TCP4:127.0.0.1:9223
+      '
     ports:
       - "9222:9222"
     healthcheck:
