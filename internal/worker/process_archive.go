@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -111,9 +112,16 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 	var result map[string]string
 	json.Unmarshal(body, &result)
 
-	// Модифицируем webSocketDebuggerUrl, чтобы использовать имя хоста "chrome" и порт 9222
+	// Резолвим IP контейнера Chrome через Docker DNS и подключаемся напрямую к порту 9223.
+	// Chrome отвергает WebSocket-соединения, где Host-заголовок содержит hostname (не IP),
+	// поэтому используем IP-адрес контейнера вместо имени сервиса.
+	chromeHost := strings.Split(chromeAddr, ":")[0]
+	addrs, err := net.LookupHost(chromeHost)
+	if err != nil || len(addrs) == 0 {
+		return "", fmt.Errorf("ошибка определения IP Chrome: %w", err)
+	}
 	parsedWsURL, _ := url.Parse(result["webSocketDebuggerUrl"])
-	parsedWsURL.Host = "chrome:9222"
+	parsedWsURL.Host = addrs[0] + ":9223"
 	wsURL := parsedWsURL.String()
 
 	// Создание контекста для chromedp
