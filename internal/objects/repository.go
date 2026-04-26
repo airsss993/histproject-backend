@@ -96,6 +96,16 @@ func (r *repository) CreateObject(ctx context.Context, data ObjectData) error {
 }
 
 func (r *repository) DeleteObject(ctx context.Context, requestID int) error {
+	// Проверяем, что заявка находится в статусе 'Опубликована'
+	var status string
+	err := r.db.QueryRowContext(ctx, `SELECT status FROM requests WHERE id = $1`, requestID).Scan(&status)
+	if err != nil {
+		return fmt.Errorf("заявка не найдена")
+	}
+	if status != "Опубликована" {
+		return fmt.Errorf("удаление доступно только для опубликованных заявок")
+	}
+
 	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("ошибка начала транзакции: %w", err)
