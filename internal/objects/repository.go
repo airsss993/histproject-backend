@@ -121,6 +121,16 @@ func (r *repository) DeleteObject(ctx context.Context, requestID int) error {
 }
 
 func (r *repository) UpdateCoordinates(ctx context.Context, requestID int, latitude, longitude float64) error {
+	// Проверяем, что заявка находится в статусе 'Опубликована'
+	var status string
+	err := r.db.QueryRowContext(ctx, `SELECT status FROM requests WHERE id = $1`, requestID).Scan(&status)
+	if err != nil {
+		return fmt.Errorf("заявка не найдена")
+	}
+	if status != "Опубликована" {
+		return fmt.Errorf("редактирование координат доступно только для опубликованных заявок")
+	}
+
 	res, err := r.db.ExecContext(ctx,
 		`UPDATE objects SET latitude = $1, longitude = $2 WHERE request_id = $3`,
 		latitude, longitude, requestID,
