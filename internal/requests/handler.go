@@ -88,40 +88,6 @@ func (h *Handler) ReviewRequest(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
-// ApproveRequestReq — тело запроса на одобрение заявки.
-type ApproveRequestReq struct {
-	EventTypeId int `json:"eventTypeId" binding:"required,gt=0"`
-}
-
-// ApproveRequest одобряет заявку, переводя её статус в 'Одобрена'.
-func (h *Handler) ApproveRequest(c *gin.Context) {
-	// Парсим ID заявки из URL
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Некорректный ID заявки"})
-		return
-	}
-
-	// Парсим тело запроса
-	var req ApproveRequestReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Ошибка валидации: " + err.Error()})
-		return
-	}
-
-	adminLogin := c.GetString("adminLogin")
-	adminRole := c.GetString("role")
-
-	// Одобряем заявку
-	err = h.svc.ApproveRequest(c.Request.Context(), id, adminLogin, adminRole, req.EventTypeId)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "success"})
-}
-
 // PublishRequestReq — тело запроса на публикацию заявки.
 type PublishRequestReq struct {
 	Latitude  float64 `json:"latitude"  binding:"required"`

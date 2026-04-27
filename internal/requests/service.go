@@ -132,31 +132,7 @@ func (s *Service) ReviewRequest(ctx context.Context, id int, adminLogin, adminRo
 	return nil
 }
 
-// ApproveRequest одобряет заявку: переводит статус в 'Одобрена'.
-func (s *Service) ApproveRequest(ctx context.Context, id int, adminLogin, adminRole string, eventTypeID int) error {
-	// Получаем заявку из БД
-	req, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		return errors.New("заявка не найдена")
-	}
-
-	// Одобрять можно только заявки со статусом 'На проверке'
-	if req.Status != "На проверке" {
-		return errors.New("заявка не находится в статусе 'На проверке'")
-	}
-
-	// Переводим статус заявки в 'Одобрена'
-	if err := s.repo.UpdateStatus(ctx, id, "Одобрена", "", req.SiteURL, req.ScreenshotURL); err != nil {
-		return err
-	}
-
-	// Записываем действие в аудит-лог
-	_ = s.repo.LogHistory(ctx, id, adminLogin, adminRole, "Одобрена", "")
-
-	return nil
-}
-
-// PublishRequest публикует одобренную заявку: создаёт объект на карте и переводит статус в 'Опубликована'.
+// PublishRequest публикует заявку: создаёт объект на карте и переводит статус в 'Опубликована'.
 func (s *Service) PublishRequest(ctx context.Context, id int, adminLogin, adminRole string, latitude, longitude float64) error {
 	// Получаем заявку из БД
 	req, err := s.repo.GetByID(ctx, id)
@@ -164,9 +140,9 @@ func (s *Service) PublishRequest(ctx context.Context, id int, adminLogin, adminR
 		return errors.New("заявка не найдена")
 	}
 
-	// Публиковать можно только заявки со статусом 'Одобрена'
-	if req.Status != "Одобрена" {
-		return errors.New("заявка не находится в статусе 'Одобрена'")
+	// Публиковать можно только заявки со статусом 'На проверке'
+	if req.Status != "На проверке" {
+		return errors.New("заявка не находится в статусе 'На проверке'")
 	}
 
 	// Создаём объект на карте
