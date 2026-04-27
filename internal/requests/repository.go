@@ -109,7 +109,7 @@ func (r *repository) List(ctx context.Context, status, q string, page, limit int
 func (r *repository) GetByID(ctx context.Context, id int) (*RequestDetail, error) {
 	var req RequestDetail
 	query := `
-		SELECT id, title, description, event_date, event_type_id, email, telegram_username,
+		SELECT id, title, description, event_date::text, event_type_id, email, telegram_username,
 		       status, admin_comment, site_url, screenshot_url, created_at
 		FROM requests WHERE id = $1`
 	err := r.db.GetContext(ctx, &req, query, id)
