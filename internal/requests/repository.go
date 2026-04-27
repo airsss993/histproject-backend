@@ -67,8 +67,8 @@ func (r *repository) UpdateStatus(ctx context.Context, id int, status, comment, 
 }
 
 func (r *repository) List(ctx context.Context, status, q string, page, limit int) (*RequestListResult, error) {
-	var clauses []string
-	var args []interface{}
+	args := []interface{}{"В обработке"}
+	clauses := []string{"status != $1"}
 
 	if status != "" {
 		args = append(args, status)
@@ -80,10 +80,7 @@ func (r *repository) List(ctx context.Context, status, q string, page, limit int
 		clauses = append(clauses, fmt.Sprintf("(title ILIKE $%d OR id::text ILIKE $%d)", n, n))
 	}
 
-	where := ""
-	if len(clauses) > 0 {
-		where = " WHERE " + strings.Join(clauses, " AND ")
-	}
+	where := " WHERE " + strings.Join(clauses, " AND ")
 
 	// Считаем общее количество записей с тем же фильтром
 	var total int

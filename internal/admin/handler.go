@@ -149,7 +149,7 @@ func clearTokenCookies(c *gin.Context) {
 	c.SetCookie("refresh_token", "", -1, "/api/admin/", "", false, true)
 }
 
-var validRequestStatuses = []string{"В обработке", "Новая", "На проверке", "Отклонена", "Опубликована"}
+var validRequestStatuses = []string{"Новая", "На проверке", "Отклонена", "Опубликована"}
 
 // GetRequests возвращает список заявок с опциональным фильтром по статусу и пагинацией.
 func (h *Handler) GetRequests(c *gin.Context) {
