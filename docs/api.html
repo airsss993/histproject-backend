@@ -340,7 +340,6 @@
   <a href="#requests-list"><span class="badge get">GET</span>Список заявок</a>
   <a href="#requests-detail"><span class="badge get">GET</span>Карточка заявки</a>
   <a href="#requests-review"><span class="badge patch">PATCH</span>Взять на проверку</a>
-  <a href="#requests-approve"><span class="badge patch">PATCH</span>Одобрить заявку</a>
   <a href="#requests-publish"><span class="badge patch">PATCH</span>Опубликовать заявку</a>
   <a href="#requests-reject"><span class="badge patch">PATCH</span>Отклонить заявку</a>
   <a href="#requests-history"><span class="badge get">GET</span>История действий</a>
@@ -650,7 +649,7 @@ GET /api/objects?eventTypeIds=2&amp;dateFrom=2015-01-01&amp;dateTo=2020-01-01</p
         <tr>
           <td>status<span class="optional-mark">?</span></td>
           <td>string</td>
-Фильтр по статусу. Возможные значения: <code>В обработке</code>, <code>Новая</code>, <code>На проверке</code>, <code>Отклонена</code>, <code>Одобрена</code>, <code>Опубликована</code>
+Фильтр по статусу. Возможные значения: <code>В обработке</code>, <code>Новая</code>, <code>На проверке</code>, <code>Отклонена</code>, <code>Опубликована</code>
           <td>нет</td>
         </tr>
         <tr>
@@ -782,54 +781,6 @@ GET /api/admin/requests?status=Новая&amp;page=2&amp;limit=10</pre>
     </div>
   </div>
 
-  <!-- ── Одобрить заявку ── -->
-  <div class="endpoint-card section-anchor" id="requests-approve">
-    <div class="card-header">
-      <span class="method patch">PATCH</span>
-      <span class="path">/admin/requests/<span class="param">:id</span>/approve</span>
-      <span class="lock-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT</span>
-    </div>
-    <div class="card-body">
-      <p class="desc">Одобрить заявку. Допустимый переход: <code>На проверке</code> → <code>Одобрена</code>.</p>
-
-      <div class="section-label">Path-параметры</div>
-      <table>
-        <tr><th>Параметр</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
-        <tr>
-          <td>id<span class="required-mark">*</span></td>
-          <td>int</td>
-          <td>ID заявки</td>
-          <td>да</td>
-        </tr>
-      </table>
-
-      <div class="section-label">Тело запроса — application/json</div>
-      <table>
-        <tr><th>Поле</th><th>Тип</th><th>Описание</th><th>Обязательный</th></tr>
-        <tr>
-          <td>eventTypeId<span class="required-mark">*</span></td>
-          <td>int</td>
-          <td>ID типа события</td>
-          <td>да</td>
-        </tr>
-      </table>
-
-      <pre>{
-  <span class="key">"eventTypeId"</span>: <span class="num">2</span>
-}</pre>
-
-      <div class="section-label">Ответ 200</div>
-      <pre>{ <span class="key">"message"</span>: <span class="str">"success"</span> }</pre>
-
-      <div class="section-label">Ошибки</div>
-      <table>
-        <tr><th>Статус</th><th>Причина</th></tr>
-        <tr><td>400</td><td>Заявка не в статусе «На проверке»</td></tr>
-        <tr><td>404</td><td>Заявка не найдена</td></tr>
-      </table>
-    </div>
-  </div>
-
   <!-- ── Опубликовать заявку ── -->
   <div class="endpoint-card section-anchor" id="requests-publish">
     <div class="card-header">
@@ -838,7 +789,7 @@ GET /api/admin/requests?status=Новая&amp;page=2&amp;limit=10</pre>
       <span class="lock-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;vertical-align:middle"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>JWT</span>
     </div>
     <div class="card-body">
-      <p class="desc">Опубликовать одобренную заявку: создаёт объект на карте и отправляет уведомление пользователю. Допустимый переход: <code>Одобрена</code> → <code>Опубликована</code>.</p>
+      <p class="desc">Опубликовать заявку: создаёт объект на карте и отправляет уведомление пользователю. Допустимый переход: <code>На проверке</code> → <code>Опубликована</code>.</p>
 
       <div class="section-label">Path-параметры</div>
       <table>
@@ -879,7 +830,7 @@ GET /api/admin/requests?status=Новая&amp;page=2&amp;limit=10</pre>
       <div class="section-label">Ошибки</div>
       <table>
         <tr><th>Статус</th><th>Причина</th></tr>
-        <tr><td>400</td><td>Заявка не в статусе «Одобрена»</td></tr>
+        <tr><td>400</td><td>Заявка не в статусе «На проверке»</td></tr>
         <tr><td>404</td><td>Заявка не найдена</td></tr>
       </table>
     </div>
@@ -973,7 +924,7 @@ GET /api/admin/requests?status=Новая&amp;page=2&amp;limit=10</pre>
       <span class="key">"id"</span>:            <span class="num">1</span>,
       <span class="key">"requestId"</span>:    <span class="num">42</span>,
       <span class="key">"requestTitle"</span>: <span class="str">"Памятник героям ВОВ"</span>,
-      <span class="key">"action"</span>:       <span class="str">"Одобрена"</span>,
+      <span class="key">"action"</span>:       <span class="str">"Опубликована"</span>,
       <span class="key">"comment"</span>:      <span class="str">""</span>,
       <span class="key">"adminLogin"</span>:   <span class="str">"admin_XxYyZzAa"</span>,
       <span class="key">"adminRole"</span>:    <span class="str">"admin"</span>,
