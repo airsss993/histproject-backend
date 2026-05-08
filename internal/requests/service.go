@@ -3,6 +3,7 @@ package requests
 import (
 	"context"
 	"errors"
+	"fmt"
 	"mime/multipart"
 	"strings"
 
@@ -10,8 +11,6 @@ import (
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/hibiken/asynq"
 )
-
-const maxArchiveSize = 50 * 1024 * 1024 // 50 МБ
 
 // StorageWriter — загрузка архива в хранилище.
 type StorageWriter interface {
@@ -28,23 +27,25 @@ type TaskBuilder func(requestID int, archiveID string) (*asynq.Task, error)
 
 // Service — бизнес-логика заявок.
 type Service struct {
-	repo          RequestRepository
-	storage       StorageWriter
-	queue         QueueEnqueuer
-	taskBuilder   TaskBuilder
-	objectsRepo   objects.Repository
-	notifications *notifications.Service
+	repo           RequestRepository
+	storage        StorageWriter
+	queue          QueueEnqueuer
+	taskBuilder    TaskBuilder
+	objectsRepo    objects.Repository
+	notifications  *notifications.Service
+	maxArchiveSize int64
 }
 
 // NewService создаёт сервис заявок.
-func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder, objectsRepo objects.Repository, notifications *notifications.Service) *Service {
+func NewService(repo RequestRepository, storage StorageWriter, queue QueueEnqueuer, taskBuilder TaskBuilder, objectsRepo objects.Repository, notifications *notifications.Service, maxUploadMB int64) *Service {
 	return &Service{
-		repo:          repo,
-		storage:       storage,
-		queue:         queue,
-		taskBuilder:   taskBuilder,
-		objectsRepo:   objectsRepo,
-		notifications: notifications,
+		repo:           repo,
+		storage:        storage,
+		queue:          queue,
+		taskBuilder:    taskBuilder,
+		objectsRepo:    objectsRepo,
+		notifications:  notifications,
+		maxArchiveSize: maxUploadMB * 1024 * 1024,
 	}
 }
 
@@ -65,8 +66,8 @@ func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (
 	if !strings.HasSuffix(input.Archive.Filename, ".zip") {
 		return ErrArchiveMustBeZip
 	}
-	if input.Archive.Size > maxArchiveSize {
-		return ErrArchiveTooLarge
+	if input.Archive.Size > s.maxArchiveSize {
+		return fmt.Errorf("файл должен быть не больше %d МБ: %w", s.maxArchiveSize/1024/1024, ErrArchiveTooLarge)
 	}
 
 	// Загружаем архив в хранилище и получаем archiveId

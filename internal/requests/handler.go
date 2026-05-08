@@ -56,7 +56,7 @@ func (h *Handler) CreateRequest(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "Архив должен иметь расширение zip"})
 			return
 		case errors.Is(err, ErrArchiveTooLarge):
-			c.JSON(http.StatusBadRequest, gin.H{"message": "Файл должен быть не больше 50 МБ"})
+			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 			return
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Ошибка создания заявки: " + err.Error()})

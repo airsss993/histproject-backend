@@ -21,6 +21,7 @@ import (
 	"github.com/airsss993/histproject-backend/pkg/notifier"
 	"github.com/airsss993/histproject-backend/pkg/queue"
 	"github.com/airsss993/histproject-backend/pkg/storage"
+	"github.com/airsss993/histproject-backend/pkg/telegram"
 )
 
 func Run() {
@@ -28,6 +29,9 @@ func Run() {
 	if err != nil {
 		log.Fatal("Ошибка загрузки конфига: ", err)
 	}
+
+	// Устанавливаем вебхук Telegram-бота при каждом запуске
+	telegram.SetWebhook(cfg.Telegram.BotToken, cfg.Telegram.WebhookURL)
 
 	conn := db.ConnDB(cfg.Database.DSN)
 
@@ -63,7 +67,8 @@ func Run() {
 	adminRepo := admin.NewRepository(conn)
 	adminSvc := admin.NewService(adminRepo, requestsRepo, notifSvc, cfg.Auth.JWTSecret)
 
-	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask, objectsRepo, notifSvc)
+
+	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask, objectsRepo, notifSvc, cfg.App.MaxUploadMB)
 	requestsHandler := requests.NewHandler(requestsSvc)
 	adminHandler := admin.NewHandler(adminSvc)
 

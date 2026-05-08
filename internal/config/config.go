@@ -18,12 +18,14 @@ type (
 		Storage  Storage
 		Redis    Redis
 		N8N      N8N
+	Telegram Telegram
 	}
 	App struct {
 		Port          string
 		ClamAVEnabled bool
 		ClamAVHost    string
 		ChromeUrl     string
+		MaxUploadMB   int64
 	}
 	Auth struct {
 		JWTSecret string
@@ -56,6 +58,11 @@ type (
 		WebhookURL    string
 		WebhookSecret string
 	}
+
+	Telegram struct {
+		BotToken   string
+		WebhookURL string
+	}
 )
 
 // Init загружает переменные окружения из .env файла и инициализирует конфигурацию приложения.
@@ -77,6 +84,11 @@ func setFromEnv(cfg *Config) error {
 	cfg.App.ClamAVEnabled = os.Getenv("CLAMAV_ENABLED") == "true"
 	cfg.App.ClamAVHost = os.Getenv("CLAMAV_HOST")
 	cfg.App.ChromeUrl = os.Getenv("CHROME_URL")
+	if mb, err := strconv.ParseInt(os.Getenv("MAX_UPLOAD_MB"), 10, 64); err == nil && mb > 0 {
+		cfg.App.MaxUploadMB = mb
+	} else {
+		cfg.App.MaxUploadMB = 50
+	}
 
 	cfg.Auth.JWTSecret = os.Getenv("JWT_SECRET")
 
@@ -92,6 +104,9 @@ func setFromEnv(cfg *Config) error {
 	cfg.CORS.AllowedOrigins = os.Getenv("CORS_ALLOWED_ORIGINS")
 	cfg.N8N.WebhookURL = os.Getenv("N8N_WEBHOOK_URL")
 	cfg.N8N.WebhookSecret = os.Getenv("N8N_WEBHOOK_SECRET")
+
+	cfg.Telegram.BotToken = os.Getenv("TG_BOT_TOKEN")
+	cfg.Telegram.WebhookURL = os.Getenv("TG_WEBHOOK_URL")
 
 	cfg.Storage.MinioEndpoint = os.Getenv("MINIO_ENDPOINT")
 	cfg.Storage.MinioUsername = os.Getenv("MINIO_ROOT_USER")
