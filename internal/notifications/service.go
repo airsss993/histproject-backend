@@ -44,3 +44,8 @@ func (s *Service) OnRejected(ctx context.Context, requestID int, title, email, u
 	chatID, _ := s.repo.GetChatID(ctx, username)
 	s.webhook.NotifyRejected(requestID, title, email, username, comment, chatID)
 }
+
+// OnAdminCreated уведомляет нового администратора о его учётных данных.
+func (s *Service) OnAdminCreated(_ context.Context, email, login, password, role string) {
+	s.webhook.NotifyAdminCreated(email, login, password, role)
+}

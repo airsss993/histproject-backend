@@ -44,6 +44,14 @@ type userPayload struct {
 	SiteURL          *string `json:"siteUrl"`
 }
 
+type adminCreatedPayload struct {
+	Event    string `json:"event"`
+	Email    string `json:"email"`
+	Login    string `json:"login"`
+	Password string `json:"password"`
+	Role     string `json:"role"`
+}
+
 // NotifyNewRequest уведомляет администраторов о новой заявке.
 func (n *Notifier) NotifyNewRequest(requestID int, title, email, username string, adminEmails []string) {
 	n.send(adminPayload{
@@ -95,6 +103,17 @@ func (n *Notifier) NotifyRejected(requestID int, title, email, username, comment
 		ChatID:           chatID,
 		AdminComment:     &comment,
 		SiteURL:          nil,
+	})
+}
+
+// NotifyAdminCreated уведомляет нового администратора о его учётных данных.
+func (n *Notifier) NotifyAdminCreated(email, login, password, role string) {
+	n.send(adminCreatedPayload{
+		Event:    "admin_created",
+		Email:    email,
+		Login:    login,
+		Password: password,
+		Role:     role,
 	})
 }
 
