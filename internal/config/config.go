@@ -18,6 +18,7 @@ type (
 		Storage  Storage
 		Redis    Redis
 		N8N      N8N
+	Telegram Telegram
 	}
 	App struct {
 		Port          string
@@ -56,6 +57,11 @@ type (
 		WebhookURL    string
 		WebhookSecret string
 	}
+
+	Telegram struct {
+		BotToken   string
+		WebhookURL string
+	}
 )
 
 // Init загружает переменные окружения из .env файла и инициализирует конфигурацию приложения.
@@ -92,6 +98,9 @@ func setFromEnv(cfg *Config) error {
 	cfg.CORS.AllowedOrigins = os.Getenv("CORS_ALLOWED_ORIGINS")
 	cfg.N8N.WebhookURL = os.Getenv("N8N_WEBHOOK_URL")
 	cfg.N8N.WebhookSecret = os.Getenv("N8N_WEBHOOK_SECRET")
+
+	cfg.Telegram.BotToken = os.Getenv("TG_BOT_TOKEN")
+	cfg.Telegram.WebhookURL = os.Getenv("TG_WEBHOOK_URL")
 
 	cfg.Storage.MinioEndpoint = os.Getenv("MINIO_ENDPOINT")
 	cfg.Storage.MinioUsername = os.Getenv("MINIO_ROOT_USER")
