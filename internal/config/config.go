@@ -25,6 +25,7 @@ type (
 		ClamAVEnabled bool
 		ClamAVHost    string
 		ChromeUrl     string
+		MaxUploadMB   int64
 	}
 	Auth struct {
 		JWTSecret string
@@ -83,6 +84,11 @@ func setFromEnv(cfg *Config) error {
 	cfg.App.ClamAVEnabled = os.Getenv("CLAMAV_ENABLED") == "true"
 	cfg.App.ClamAVHost = os.Getenv("CLAMAV_HOST")
 	cfg.App.ChromeUrl = os.Getenv("CHROME_URL")
+	if mb, err := strconv.ParseInt(os.Getenv("MAX_UPLOAD_MB"), 10, 64); err == nil && mb > 0 {
+		cfg.App.MaxUploadMB = mb
+	} else {
+		cfg.App.MaxUploadMB = 50
+	}
 
 	cfg.Auth.JWTSecret = os.Getenv("JWT_SECRET")
 

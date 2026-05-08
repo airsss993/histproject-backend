@@ -67,7 +67,7 @@ func Run() {
 	n8nNotifier := notifier.New(cfg.N8N.WebhookURL, cfg.N8N.WebhookSecret)
 	notifSvc := notifications.New(n8nNotifier, notifRepo)
 
-	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask, objectsRepo, notifSvc)
+	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask, objectsRepo, notifSvc, cfg.App.MaxUploadMB)
 	requestsHandler := requests.NewHandler(requestsSvc)
 	adminHandler := admin.NewHandler(adminSvc)
 
