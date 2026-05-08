@@ -2,8 +2,8 @@
 -- +goose StatementBegin
 
 -- Снимаем FK-ограничения и удаляем таблицу event_types
-ALTER TABLE requests DROP CONSTRAINT requests_event_type_id_fkey;
-ALTER TABLE objects DROP CONSTRAINT objects_event_type_id_fkey;
+ALTER TABLE requests DROP CONSTRAINT IF EXISTS requests_event_type_id_fkey;
+ALTER TABLE objects DROP CONSTRAINT IF EXISTS objects_event_type_id_fkey;
 DROP TABLE IF EXISTS event_types CASCADE;
 
 -- +goose StatementEnd
