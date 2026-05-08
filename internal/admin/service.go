@@ -8,6 +8,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/airsss993/histproject-backend/internal/notifications"
 	"github.com/airsss993/histproject-backend/internal/requests"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -23,12 +24,13 @@ const (
 type Service struct {
 	repo         Repository
 	requestsRepo requests.RequestRepository
+	notifSvc     *notifications.Service
 	jwtSecret    []byte
 }
 
 // NewService создаёт сервис администраторов.
-func NewService(repo Repository, requestsRepo requests.RequestRepository, jwtSecret string) *Service {
-	return &Service{repo: repo, requestsRepo: requestsRepo, jwtSecret: []byte(jwtSecret)}
+func NewService(repo Repository, requestsRepo requests.RequestRepository, notifSvc *notifications.Service, jwtSecret string) *Service {
+	return &Service{repo: repo, requestsRepo: requestsRepo, notifSvc: notifSvc, jwtSecret: []byte(jwtSecret)}
 }
 
 // Login проверяет логин/пароль и возвращает пару токенов.
@@ -129,6 +131,11 @@ func (s *Service) CreateAdmin(ctx context.Context, role, email string) (*CreateA
 	}
 	if !inserted {
 		return nil, errors.New("ошибка создания админа")
+	}
+
+	// Отправляем уведомление с учётными данными на почту нового администратора
+	if email != "" {
+		s.notifSvc.OnAdminCreated(ctx, email, login, password, role)
 	}
 
 	return &CreateAdminResponse{Login: login, Password: password}, nil

@@ -58,14 +58,15 @@ func Run() {
 	objectsSvc := objects.NewService(objectsRepo, minioClient)
 	objectsHandler := objects.NewHandler(objectsSvc)
 
-	// Инициализация модуля admin
-	adminRepo := admin.NewRepository(conn)
-	adminSvc := admin.NewService(adminRepo, requestsRepo, cfg.Auth.JWTSecret)
-
 	// Инициализация модуля notifications
 	notifRepo := notifications.NewRepository(conn)
 	n8nNotifier := notifier.New(cfg.N8N.WebhookURL, cfg.N8N.WebhookSecret)
 	notifSvc := notifications.New(n8nNotifier, notifRepo)
+
+	// Инициализация модуля admin
+	adminRepo := admin.NewRepository(conn)
+	adminSvc := admin.NewService(adminRepo, requestsRepo, notifSvc, cfg.Auth.JWTSecret)
+
 
 	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask, objectsRepo, notifSvc, cfg.App.MaxUploadMB)
 	requestsHandler := requests.NewHandler(requestsSvc)
