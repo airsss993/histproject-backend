@@ -10,12 +10,13 @@ import (
 
 // Handler — HTTP-обработчики аутентификации администраторов.
 type Handler struct {
-	svc *Service
+	svc          *Service
+	cookieDomain string
 }
 
 // NewHandler создаёт handler администраторов.
-func NewHandler(svc *Service) *Handler {
-	return &Handler{svc: svc}
+func NewHandler(svc *Service, cookieDomain string) *Handler {
+	return &Handler{svc: svc, cookieDomain: cookieDomain}
 }
 
 // Login авторизует администратора и устанавливает токены в куки.
@@ -32,7 +33,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	setTokenCookies(c, tokens)
+	h.setTokenCookies(c, tokens)
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
@@ -50,7 +51,7 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	setTokenCookies(c, tokens)
+	h.setTokenCookies(c, tokens)
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
@@ -61,13 +62,18 @@ func (h *Handler) Logout(c *gin.Context) {
 		_ = h.svc.Logout(c.Request.Context(), refreshToken)
 	}
 
-	clearTokenCookies(c)
+	h.clearTokenCookies(c)
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
-func setTokenCookies(c *gin.Context, tokens *TokenResponse) {
-	c.SetCookie("access_token", tokens.AccessToken, 15*60, "/", "", true, true)
-	c.SetCookie("refresh_token", tokens.RefreshToken, 7*24*60*60, "/api/admin/", "", true, true)
+func (h *Handler) setTokenCookies(c *gin.Context, tokens *TokenResponse) {
+	c.SetCookie("access_token", tokens.AccessToken, 15*60, "/", h.cookieDomain, true, true)
+	c.SetCookie("refresh_token", tokens.RefreshToken, 7*24*60*60, "/api/admin/", h.cookieDomain, true, true)
+}
+
+// PreviewAuth валидирует access_token для Caddy forward_auth. Возвращает 200 если токен валиден.
+func (h *Handler) PreviewAuth(c *gin.Context) {
+	c.Status(http.StatusOK)
 }
 
 // CreateAdmin создаёт нового администратора и возвращает сгенерированные login/password.
@@ -144,9 +150,9 @@ func (h *Handler) DeleteAdmin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
 
-func clearTokenCookies(c *gin.Context) {
-	c.SetCookie("access_token", "", -1, "/", "", false, true)
-	c.SetCookie("refresh_token", "", -1, "/api/admin/", "", false, true)
+func (h *Handler) clearTokenCookies(c *gin.Context) {
+	c.SetCookie("access_token", "", -1, "/", h.cookieDomain, false, true)
+	c.SetCookie("refresh_token", "", -1, "/api/admin/", h.cookieDomain, false, true)
 }
 
 var validRequestStatuses = []string{"Новая", "На проверке", "Отклонена", "Опубликована"}

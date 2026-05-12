@@ -52,6 +52,7 @@ func InitRoutes(r *gin.Engine, h Handlers, adminSvc *admin.Service) {
 			c.JSON(http.StatusOK, gin.H{"message": "pong", "adminId": c.GetInt("adminId"), "role": c.GetString("role")})
 		})
 		adminGroup.POST("/logout", h.Admin.Logout)
+		adminGroup.GET("/preview", h.Admin.PreviewAuth)
 
 		// Заявки
 		adminGroup.GET("/requests", h.Admin.GetRequests)

@@ -28,7 +28,8 @@ type (
 		MaxUploadMB   int64
 	}
 	Auth struct {
-		JWTSecret string
+		JWTSecret    string
+		CookieDomain string
 	}
 
 	Database struct {
@@ -42,6 +43,7 @@ type (
 		MinioEndpoint   string
 		MinioBucketName string
 		MinioPublicUrl  string
+		SitePublicUrl   string
 	}
 
 	Redis struct {
@@ -91,6 +93,7 @@ func setFromEnv(cfg *Config) error {
 	}
 
 	cfg.Auth.JWTSecret = os.Getenv("JWT_SECRET")
+	cfg.Auth.CookieDomain = os.Getenv("COOKIE_DOMAIN")
 
 	cfg.Database.Env = os.Getenv("APP_ENV")
 	switch cfg.Database.Env {
@@ -113,6 +116,10 @@ func setFromEnv(cfg *Config) error {
 	cfg.Storage.MinioPassword = os.Getenv("MINIO_ROOT_PASSWORD")
 	cfg.Storage.MinioBucketName = os.Getenv("MINIO_BUCKET_NAME")
 	cfg.Storage.MinioPublicUrl = os.Getenv("MINIO_PUBLIC_URL")
+	cfg.Storage.SitePublicUrl = os.Getenv("SITE_PUBLIC_URL")
+	if cfg.Storage.SitePublicUrl == "" {
+		cfg.Storage.SitePublicUrl = cfg.Storage.MinioPublicUrl
+	}
 
 	cfg.Redis.RedisPassword = os.Getenv("REDIS_PASSWORD")
 	cfg.Redis.RedisAddress = os.Getenv("REDIS_ADDRESS")

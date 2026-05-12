@@ -93,7 +93,7 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 		return fmt.Errorf("ошибка при создании скриншота: %w", err)
 	}
 
-	siteUrl := fmt.Sprintf("https://%s/sites/%d/index.html", w.cfg.Storage.MinioPublicUrl, payload.RequestId)
+	siteUrl := fmt.Sprintf("https://%s/sites/%d/index.html", w.cfg.Storage.SitePublicUrl, payload.RequestId)
 	log.Printf("[worker] requestId=%d: готово, siteUrl=%s screenshotUrl=%s", payload.RequestId, siteUrl, screenshotUrl)
 	_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Новая", "", siteUrl, screenshotUrl)
 
@@ -181,7 +181,7 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 	}
 
 	// Формирование URL скриншота
-	screenshotUrl := fmt.Sprintf("https://%s/sites/%d/screenshot.png", w.cfg.Storage.MinioPublicUrl, requestID)
+	screenshotUrl := fmt.Sprintf("https://%s/sites/%d/screenshot.png", w.cfg.Storage.SitePublicUrl, requestID)
 
 	return screenshotUrl, nil
 }

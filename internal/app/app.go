@@ -70,7 +70,7 @@ func Run() {
 
 	requestsSvc := requests.NewService(requestsRepo, minioClient, queueClient, worker.NewProcessArchiveTask, objectsRepo, notifSvc, cfg.App.MaxUploadMB)
 	requestsHandler := requests.NewHandler(requestsSvc)
-	adminHandler := admin.NewHandler(adminSvc)
+	adminHandler := admin.NewHandler(adminSvc, cfg.Auth.CookieDomain)
 
 	// Автосоздание super_admin при первом запуске
 	if err := adminSvc.SeedSuperAdmin(context.Background()); err != nil {
