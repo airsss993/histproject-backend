@@ -15,6 +15,7 @@ type Repository interface {
 	CreateObject(ctx context.Context, data ObjectData) error
 	DeleteObject(ctx context.Context, requestID int) error
 	UpdateCoordinates(ctx context.Context, requestID int, latitude, longitude float64) error
+	IsPublished(ctx context.Context, requestID int) (bool, error)
 }
 
 type repository struct {
@@ -128,6 +129,12 @@ func (r *repository) DeleteObject(ctx context.Context, requestID int) error {
 	}
 
 	return tx.Commit()
+}
+
+func (r *repository) IsPublished(ctx context.Context, requestID int) (bool, error) {
+	var exists bool
+	err := r.db.GetContext(ctx, &exists, `SELECT EXISTS(SELECT 1 FROM objects WHERE request_id = $1)`, requestID)
+	return exists, err
 }
 
 func (r *repository) UpdateCoordinates(ctx context.Context, requestID int, latitude, longitude float64) error {

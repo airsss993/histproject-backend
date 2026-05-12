@@ -3,6 +3,7 @@ package objects
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -96,6 +97,32 @@ func (h *Handler) DeleteObject(c *gin.Context) {
 type UpdateCoordinatesReq struct {
 	Latitude  float64 `json:"latitude"  binding:"required"`
 	Longitude float64 `json:"longitude" binding:"required"`
+}
+
+// SiteAuth используется Caddy forward_auth для проверки доступа к /sites/{id}/*.
+// Возвращает 200 если заявка опубликована, 403 если нет.
+func (h *Handler) SiteAuth(c *gin.Context) {
+	// Caddy передаёт текущий URI в заголовке X-Forwarded-Uri: /{id}/index.html
+	uri := c.GetHeader("X-Forwarded-Uri")
+	parts := strings.SplitN(strings.TrimPrefix(uri, "/"), "/", 2)
+	if len(parts) == 0 || parts[0] == "" {
+		c.Status(http.StatusForbidden)
+		return
+	}
+
+	requestID, err := strconv.Atoi(parts[0])
+	if err != nil {
+		c.Status(http.StatusForbidden)
+		return
+	}
+
+	published, err := h.svc.IsPublished(c.Request.Context(), requestID)
+	if err != nil || !published {
+		c.Status(http.StatusForbidden)
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 // UpdateCoordinates обновляет координаты метки по ID заявки.

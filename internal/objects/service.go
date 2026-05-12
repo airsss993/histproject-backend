@@ -46,3 +46,8 @@ func (s *Service) UpdateCoordinates(ctx context.Context, requestID int, latitude
 	return s.repo.UpdateCoordinates(ctx, requestID, latitude, longitude)
 }
 
+// IsPublished проверяет, опубликован ли сайт заявки (есть ли объект на карте).
+func (s *Service) IsPublished(ctx context.Context, requestID int) (bool, error) {
+	return s.repo.IsPublished(ctx, requestID)
+}
+
