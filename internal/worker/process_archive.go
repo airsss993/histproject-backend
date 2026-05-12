@@ -161,7 +161,7 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 			_, _, _, _, err := page.Navigate(siteUrl).Do(ctx)
 			return err
 		}),
-		chromedp.Sleep(3*time.Second),
+		chromedp.Sleep(7*time.Second),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			data, err := page.CaptureScreenshot().WithQuality(90).Do(ctx)
 			if err != nil {
