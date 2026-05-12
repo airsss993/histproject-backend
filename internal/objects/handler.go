@@ -102,9 +102,11 @@ type UpdateCoordinatesReq struct {
 // SiteAuth используется Caddy forward_auth для проверки доступа к /sites/{id}/*.
 // Возвращает 200 если заявка опубликована, 403 если нет.
 func (h *Handler) SiteAuth(c *gin.Context) {
-	// Caddy передаёт текущий URI в заголовке X-Forwarded-Uri: /{id}/index.html
+	// Caddy передаёт оригинальный URI: /sites/{id}/index.html
 	uri := c.GetHeader("X-Forwarded-Uri")
-	parts := strings.SplitN(strings.TrimPrefix(uri, "/"), "/", 2)
+	uri = strings.TrimPrefix(uri, "/sites/")
+	uri = strings.TrimPrefix(uri, "/")
+	parts := strings.SplitN(uri, "/", 2)
 	if len(parts) == 0 || parts[0] == "" {
 		c.Status(http.StatusForbidden)
 		return
