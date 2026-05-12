@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"strings"
 
+
 	"github.com/airsss993/histproject-backend/internal/notifications"
 	"github.com/airsss993/histproject-backend/internal/objects"
 	"github.com/hibiken/asynq"
@@ -146,6 +147,9 @@ func (s *Service) PublishRequest(ctx context.Context, id int, adminLogin, adminR
 		return errors.New("заявка не находится в статусе 'На проверке'")
 	}
 
+	// При публикации переводим URL из приватного /preview/ в публичный /sites/
+	publicSiteURL := strings.Replace(req.SiteURL, "/preview/", "/sites/", 1)
+
 	// Создаём объект на карте
 	if err := s.objectsRepo.CreateObject(ctx, objects.ObjectData{
 		RequestID:       req.ID,
@@ -155,14 +159,14 @@ func (s *Service) PublishRequest(ctx context.Context, id int, adminLogin, adminR
 		Longitude:       longitude,
 		EventDate:       req.EventDate,
 		EventTypeID:     req.EventTypeID,
-		SiteURL:         req.SiteURL,
+		SiteURL:         publicSiteURL,
 		PreviewImageURL: req.ScreenshotURL,
 	}); err != nil {
 		return err
 	}
 
-	// Переводим статус заявки в 'Опубликована'
-	if err := s.repo.UpdateStatus(ctx, id, "Опубликована", "", req.SiteURL, req.ScreenshotURL); err != nil {
+	// Переводим статус заявки в 'Опубликована' и сохраняем публичный URL
+	if err := s.repo.UpdateStatus(ctx, id, "Опубликована", "", publicSiteURL, req.ScreenshotURL); err != nil {
 		return err
 	}
 
@@ -170,7 +174,7 @@ func (s *Service) PublishRequest(ctx context.Context, id int, adminLogin, adminR
 	_ = s.repo.LogHistory(ctx, id, adminLogin, adminRole, "Опубликована", "")
 
 	// Уведомляем пользователя о публикации заявки
-	s.notifications.OnApproved(ctx, req.ID, req.Title, req.Email, req.TelegramUsername, req.SiteURL)
+	s.notifications.OnApproved(ctx, req.ID, req.Title, req.Email, req.TelegramUsername, publicSiteURL)
 	return nil
 }
 
