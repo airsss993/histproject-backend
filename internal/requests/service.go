@@ -7,6 +7,8 @@ import (
 	"mime/multipart"
 	"strings"
 
+	"github.com/gosimple/slug"
+
 
 	"github.com/airsss993/histproject-backend/internal/notifications"
 	"github.com/airsss993/histproject-backend/internal/objects"
@@ -86,6 +88,12 @@ func (s *Service) CreateRequest(ctx context.Context, input CreateRequestInput) (
 		EventDate:        input.EventDate,
 		EventTypeId:      input.EventTypeId,
 		ArchiveId:        archiveId,
+	}
+
+	// Генерируем уникальный slug из заголовка
+	data.Slug, err = s.uniqueSlug(ctx, input.Title)
+	if err != nil {
+		return err
 	}
 
 	// Получаем ID новой заявки
@@ -207,4 +215,23 @@ func (s *Service) RejectRequest(ctx context.Context, id int, adminLogin, adminRo
 	// Уведомляем пользователя об отклонении заявки
 	s.notifications.OnRejected(ctx, req.ID, req.Title, req.Email, req.TelegramUsername, comment)
 	return nil
+}
+
+// uniqueSlug генерирует уникальный slug из заголовка, добавляя числовой суффикс при коллизии.
+func (s *Service) uniqueSlug(ctx context.Context, title string) (string, error) {
+	base := slug.Make(title)
+	if base == "" {
+		base = "object"
+	}
+	candidate := base
+	for i := 1; ; i++ {
+		exists, err := s.repo.SlugExists(ctx, candidate)
+		if err != nil {
+			return "", fmt.Errorf("ошибка проверки slug: %w", err)
+		}
+		if !exists {
+			return candidate, nil
+		}
+		candidate = fmt.Sprintf("%s-%d", base, i)
+	}
 }

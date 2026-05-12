@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+
 // Handler — HTTP-обработчики для объектов и типов событий.
 type Handler struct {
 	svc *Service
@@ -102,7 +103,7 @@ type UpdateCoordinatesReq struct {
 // SiteAuth используется Caddy forward_auth для проверки доступа к /sites/{id}/*.
 // Возвращает 200 если заявка опубликована, 403 если нет.
 func (h *Handler) SiteAuth(c *gin.Context) {
-	// Caddy передаёт оригинальный URI: /sites/{id}/index.html
+	// Caddy передаёт оригинальный URI: /sites/{slug}/index.html
 	uri := c.GetHeader("X-Forwarded-Uri")
 	uri = strings.TrimPrefix(uri, "/sites/")
 	uri = strings.TrimPrefix(uri, "/")
@@ -111,14 +112,9 @@ func (h *Handler) SiteAuth(c *gin.Context) {
 		c.Status(http.StatusForbidden)
 		return
 	}
+	siteSlug := parts[0]
 
-	requestID, err := strconv.Atoi(parts[0])
-	if err != nil {
-		c.Status(http.StatusForbidden)
-		return
-	}
-
-	published, err := h.svc.IsPublished(c.Request.Context(), requestID)
+	published, err := h.svc.IsPublished(c.Request.Context(), siteSlug)
 	if err != nil || !published {
 		c.Status(http.StatusForbidden)
 		return

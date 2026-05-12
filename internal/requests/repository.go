@@ -11,6 +11,7 @@ import (
 // RequestRepository — доступ к заявкам (создание и обновление статуса).
 type RequestRepository interface {
 	Create(ctx context.Context, data RequestData) (int, error)
+	SlugExists(ctx context.Context, slug string) (bool, error)
 	UpdateStatus(ctx context.Context, id int, status, comment, siteURL, screenshotURL string) error
 	List(ctx context.Context, status, q string, page, limit int) (*RequestListResult, error)
 	GetByID(ctx context.Context, id int) (*RequestDetail, error)
@@ -29,6 +30,7 @@ type RequestData struct {
 	ScreenshotURL    string
 	EventDate        string
 	EventTypeId      int
+	Slug             string
 }
 
 type repository struct {
@@ -43,18 +45,24 @@ func NewRepository(db *sqlx.DB) RequestRepository {
 func (r *repository) Create(ctx context.Context, data RequestData) (int, error) {
 	var id int
 	query := `
-		INSERT INTO requests 
-			(title, description, email, telegram_username, archive_id, site_url, screenshot_url, event_date, event_type_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO requests
+			(title, description, email, telegram_username, archive_id, site_url, screenshot_url, event_date, event_type_id, slug)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id`
 	err := r.db.QueryRowContext(ctx, query,
 		data.Title, data.Description, data.Email, data.TelegramUsername, data.ArchiveId,
-		data.SiteURL, data.ScreenshotURL, data.EventDate, data.EventTypeId,
+		data.SiteURL, data.ScreenshotURL, data.EventDate, data.EventTypeId, data.Slug,
 	).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("ошибка вставки новой записи о заявке в БД: %w", err)
 	}
 	return id, nil
+}
+
+func (r *repository) SlugExists(ctx context.Context, slug string) (bool, error) {
+	var exists bool
+	err := r.db.GetContext(ctx, &exists, `SELECT EXISTS(SELECT 1 FROM requests WHERE slug = $1)`, slug)
+	return exists, err
 }
 
 func (r *repository) UpdateStatus(ctx context.Context, id int, status, comment, siteURL, screenshotURL string) error {
@@ -110,7 +118,7 @@ func (r *repository) GetByID(ctx context.Context, id int) (*RequestDetail, error
 	var req RequestDetail
 	query := `
 		SELECT id, title, description, event_date::text, event_type_id, email, telegram_username,
-		       status, admin_comment, site_url, screenshot_url, created_at
+		       status, admin_comment, slug, site_url, screenshot_url, created_at
 		FROM requests WHERE id = $1`
 	err := r.db.GetContext(ctx, &req, query, id)
 	if err != nil {

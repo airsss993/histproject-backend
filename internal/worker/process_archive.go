@@ -61,6 +61,13 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 
 	log.Printf("[worker] requestId=%d archiveId=%s: начало обработки", payload.RequestId, payload.ArchiveId)
 
+	// Получаем slug заявки для формирования URL и пути в хранилище
+	req, err := w.requestRepo.GetByID(ctx, payload.RequestId)
+	if err != nil {
+		return fmt.Errorf("ошибка получения заявки: %w", err)
+	}
+	siteSlug := req.Slug
+
 	// Получение архива из хранилища по ID архива
 	archive, _, err := w.storage.GetArchive(payload.ArchiveId)
 	if err != nil {
@@ -78,7 +85,7 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 	}
 
 	log.Printf("[worker] requestId=%d: распаковка архива", payload.RequestId)
-	if err := w.unzipArchive(payload.RequestId, payload.ArchiveId); err != nil {
+	if err := w.unzipArchive(siteSlug, payload.ArchiveId); err != nil {
 		log.Printf("[worker] requestId=%d: ошибка распаковки: %v", payload.RequestId, err)
 		_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Отклонена", "Отсутствует index.html", "", "")
 		return nil
@@ -86,21 +93,21 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 
 	log.Printf("[worker] requestId=%d: создание скриншота", payload.RequestId)
 	w.chromeMu.Lock()
-	screenshotUrl, err := w.createScreenshot(payload.RequestId)
+	screenshotUrl, err := w.createScreenshot(siteSlug)
 	w.chromeMu.Unlock()
 	if err != nil {
 		log.Printf("[worker] requestId=%d: ошибка скриншота: %v", payload.RequestId, err)
 		return fmt.Errorf("ошибка при создании скриншота: %w", err)
 	}
 
-	siteUrl := fmt.Sprintf("https://%s/preview/%d/index.html", w.cfg.Storage.SitePublicUrl, payload.RequestId)
+	siteUrl := fmt.Sprintf("https://%s/preview/%s/index.html", w.cfg.Storage.SitePublicUrl, siteSlug)
 	log.Printf("[worker] requestId=%d: готово, siteUrl=%s screenshotUrl=%s", payload.RequestId, siteUrl, screenshotUrl)
 	_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Новая", "", siteUrl, screenshotUrl)
 
 	return nil
 }
 
-func (w *Worker) createScreenshot(requestID int) (string, error) {
+func (w *Worker) createScreenshot(siteSlug string) (string, error) {
 	// Получаем актуальный WebSocket URL от Chrome
 	chromeAddr := strings.Replace(w.cfg.App.ChromeUrl, "ws://", "", 1)
 	req, err := http.NewRequest("GET", "http://"+chromeAddr+"/json/version", nil)
@@ -152,7 +159,7 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 	defer cancel()
 
 	var buf []byte
-	siteUrl := fmt.Sprintf("http://%s/sites/%d/index.html", w.cfg.Storage.MinioEndpoint, requestID)
+	siteUrl := fmt.Sprintf("http://%s/sites/%s/index.html", w.cfg.Storage.MinioEndpoint, siteSlug)
 
 	// Выставляем размер скриншота 1920x1080 и делаем скриншот только видимой области.
 	if err := chromedp.Run(ctx,
@@ -175,19 +182,19 @@ func (w *Worker) createScreenshot(requestID int) (string, error) {
 	}
 
 	// Загрузка скриншота в хранилище и получение URL
-	screenshotKey := fmt.Sprintf("%d/screenshot.png", requestID)
+	screenshotKey := fmt.Sprintf("%s/screenshot.png", siteSlug)
 	if err := w.storage.UploadFileSites(bytes.NewReader(buf), int64(len(buf)), screenshotKey); err != nil {
 		return "", fmt.Errorf("ошибка при загрузке скриншота в хранилище: %w", err)
 	}
 
 	// Формирование URL скриншота
-	screenshotUrl := fmt.Sprintf("https://%s/sites/%d/screenshot.png", w.cfg.Storage.MinioPublicUrl, requestID)
+	screenshotUrl := fmt.Sprintf("https://%s/sites/%s/screenshot.png", w.cfg.Storage.MinioPublicUrl, siteSlug)
 
 	return screenshotUrl, nil
 }
 
 // unzipArchive - функция для распаковки архива и загрузки файлов в хранилище
-func (w *Worker) unzipArchive(requestID int, archiveID string) error {
+func (w *Worker) unzipArchive(siteSlug string, archiveID string) error {
 	// Получить объект из MinIO и его размер
 	archive, size, err := w.storage.GetArchive(archiveID)
 	if err != nil {
@@ -235,7 +242,7 @@ func (w *Worker) unzipArchive(requestID int, archiveID string) error {
 		if prefix != "" {
 			filePath = strings.TrimPrefix(file.Name, prefix+"/")
 		}
-		key := fmt.Sprintf("%d/%s", requestID, filePath)
+		key := fmt.Sprintf("%s/%s", siteSlug, filePath)
 
 		if err := w.storage.UploadFileSites(rc, int64(file.UncompressedSize64), key); err != nil {
 			_ = rc.Close()
