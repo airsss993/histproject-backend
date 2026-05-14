@@ -108,16 +108,20 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 }
 
 func (w *Worker) createScreenshot(siteSlug string) (string, error) {
-	// Получаем актуальный WebSocket URL от Chrome
 	chromeAddr := strings.Replace(w.cfg.App.ChromeUrl, "ws://", "", 1)
+	httpClient := &http.Client{Timeout: 15 * time.Second}
+
+	// Закрываем все зависшие вкладки Chrome от предыдущих упавших сессий.
+	// Без этого накопленные вкладки перегружают Chrome и /json/version начинает отвечать за ~50с.
+	w.closeChromeTargets(httpClient, chromeAddr)
+
 	req, err := http.NewRequest("GET", "http://"+chromeAddr+"/json/version", nil)
 	if err != nil {
 		return "", fmt.Errorf("ошибка создания запроса к Chrome: %w", err)
 	}
 	req.Host = "localhost"
 
-	// Выполняем запрос к Chrome для получения WebSocket URL
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("ошибка подключения к Chrome: %w", err)
 	}
@@ -252,6 +256,43 @@ func (w *Worker) unzipArchive(siteSlug string, archiveID string) error {
 	}
 
 	return nil
+}
+
+// closeChromeTargets закрывает все открытые вкладки Chrome через REST API.
+// Предотвращает накопление зависших вкладок от упавших chromedp-сессий, которые перегружают браузер.
+func (w *Worker) closeChromeTargets(client *http.Client, chromeAddr string) {
+	req, err := http.NewRequest("GET", "http://"+chromeAddr+"/json/list", nil)
+	if err != nil {
+		return
+	}
+	req.Host = "localhost"
+	resp, err := client.Do(req)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	var targets []map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&targets); err != nil {
+		return
+	}
+
+	for _, target := range targets {
+		id, ok := target["id"].(string)
+		if !ok {
+			continue
+		}
+		closeReq, err := http.NewRequest("GET", "http://"+chromeAddr+"/json/close/"+id, nil)
+		if err != nil {
+			continue
+		}
+		closeReq.Host = "localhost"
+		closeResp, err := client.Do(closeReq)
+		if err != nil {
+			continue
+		}
+		closeResp.Body.Close()
+	}
 }
 
 // startLocalProxy запускает TCP-прокси на случайном порту 127.0.0.1 и пробрасывает соединения на targetAddr.
