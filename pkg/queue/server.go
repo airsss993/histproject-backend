@@ -17,7 +17,7 @@ func NewServer(cfg config.Redis) *Server {
 			DB:       cfg.RedisDb,
 			Password: cfg.RedisPassword,
 		}, asynq.Config{
-			Concurrency: 5,
+			Concurrency: 1,
 		}),
 	}
 }

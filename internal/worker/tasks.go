@@ -2,6 +2,7 @@ package worker
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/hibiken/asynq"
 )
@@ -26,5 +27,8 @@ func NewProcessArchiveTask(requestId int, archiveId string) (*asynq.Task, error)
 	if err != nil {
 		return nil, err
 	}
-	return asynq.NewTask(TypeProcessArchive, payload), nil
+	return asynq.NewTask(TypeProcessArchive, payload,
+		asynq.MaxRetry(3),
+		asynq.Timeout(2*time.Minute),
+	), nil
 }
