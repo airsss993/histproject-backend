@@ -102,7 +102,13 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 
 	siteUrl := fmt.Sprintf("https://%s/preview/%s/index.html", w.cfg.Storage.SitePublicUrl, siteSlug)
 	log.Printf("[worker] requestId=%d: готово, siteUrl=%s screenshotUrl=%s", payload.RequestId, siteUrl, screenshotUrl)
-	_ = w.requestRepo.UpdateStatus(ctx, payload.RequestId, "Новая", "", siteUrl, screenshotUrl)
+
+	// Используем свежий контекст — asynq-контекст к этому моменту может быть отменён
+	saveCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := w.requestRepo.UpdateStatus(saveCtx, payload.RequestId, "Новая", "", siteUrl, screenshotUrl); err != nil {
+		return fmt.Errorf("ошибка сохранения результата в БД: %w", err)
+	}
 
 	return nil
 }

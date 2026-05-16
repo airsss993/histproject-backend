@@ -29,6 +29,6 @@ func NewProcessArchiveTask(requestId int, archiveId string) (*asynq.Task, error)
 	}
 	return asynq.NewTask(TypeProcessArchive, payload,
 		asynq.MaxRetry(3),
-		asynq.Timeout(2*time.Minute),
+		asynq.Timeout(15*time.Minute),
 	), nil
 }
