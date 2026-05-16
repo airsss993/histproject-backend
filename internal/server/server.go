@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 )
 
 type Server struct {
@@ -14,8 +15,9 @@ type Server struct {
 // New создаёт новый экземпляр HTTP-сервера.
 func New(addr string, handler http.Handler) *Server {
 	return &Server{server: &http.Server{
-		Addr:    addr,
-		Handler: handler,
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
 	}}
 }
 

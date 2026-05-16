@@ -20,6 +20,7 @@ type Handlers struct {
 
 func New(cfg *config.Config, h Handlers, adminSvc *admin.Service) *gin.Engine {
 	r := gin.Default()
+	r.MaxMultipartMemory = 350 << 20 
 	r.Use(corsMiddleware(cfg.CORS.AllowedOrigins))
 
 	InitRoutes(r, h, adminSvc)
