@@ -22,8 +22,8 @@ func NewHandler(svc *Service) *Handler {
 
 // CreateRequestReq — форма создания заявки.
 type CreateRequestReq struct {
-	Title            string                `form:"title" binding:"required,max=200"`
-	Description      string                `form:"description" binding:"required,max=1500"`
+	Title            string                `form:"title" binding:"required,max=100"`
+	Description      string                `form:"description" binding:"required,max=450"`
 	EventDate        string                `form:"eventDate" binding:"required,datetime=2006-01-02"`
 	EventTypeId      int                   `form:"eventTypeId" binding:"required,gt=0"`
 	Email            string                `form:"email" binding:"required,email,max=70"`
