@@ -67,8 +67,8 @@ func (h *Handler) Logout(c *gin.Context) {
 }
 
 func (h *Handler) setTokenCookies(c *gin.Context, tokens *TokenResponse) {
-	c.SetCookie("access_token", tokens.AccessToken, 15*60, "/", h.cookieDomain, true, true)
-	c.SetCookie("refresh_token", tokens.RefreshToken, 7*24*60*60, "/api/admin/", h.cookieDomain, true, true)
+	c.SetCookie("access_token", tokens.AccessToken, 15*60, "/", h.cookieDomain, false, true)
+	c.SetCookie("refresh_token", tokens.RefreshToken, 7*24*60*60, "/api/admin/", h.cookieDomain, false, true)
 }
 
 // PreviewAuth валидирует access_token для Caddy forward_auth. Возвращает 200 если токен валиден.
