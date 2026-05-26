@@ -198,7 +198,7 @@ func (w *Worker) createScreenshot(siteSlug string) (string, error) {
 	}
 
 	// Формирование URL скриншота
-	screenshotUrl := fmt.Sprintf("https://%s/sites/%s/screenshot.png", w.cfg.Storage.MinioPublicUrl, siteSlug)
+	screenshotUrl := fmt.Sprintf("http://%s/sites/%s/screenshot.png", w.cfg.Storage.MinioPublicUrl, siteSlug)
 
 	return screenshotUrl, nil
 }
