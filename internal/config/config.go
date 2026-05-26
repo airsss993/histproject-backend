@@ -17,8 +17,8 @@ type (
 		CORS     CORS
 		Storage  Storage
 		Redis    Redis
-		N8N      N8N
-	Telegram Telegram
+		Email    Email
+		Telegram Telegram
 	}
 	App struct {
 		Port          string
@@ -56,14 +56,17 @@ type (
 		AllowedOrigins string
 	}
 
-	N8N struct {
-		WebhookURL    string
-		WebhookSecret string
+	// Email — настройки отправки писем через Resend API.
+	Email struct {
+		ResendAPIKey  string
+		From          string
+		AdminPanelURL string
 	}
 
+	// Telegram — настройки уведомлений в группу администраторов.
 	Telegram struct {
-		BotToken   string
-		WebhookURL string
+		BotToken    string
+		AdminChatID string
 	}
 )
 
@@ -105,11 +108,16 @@ func setFromEnv(cfg *Config) error {
 		cfg.Database.DSN = os.Getenv("PG_DSN")
 	}
 	cfg.CORS.AllowedOrigins = os.Getenv("CORS_ALLOWED_ORIGINS")
-	cfg.N8N.WebhookURL = os.Getenv("N8N_WEBHOOK_URL")
-	cfg.N8N.WebhookSecret = os.Getenv("N8N_WEBHOOK_SECRET")
+
+	cfg.Email.ResendAPIKey = os.Getenv("RESEND_API_KEY")
+	cfg.Email.From = os.Getenv("EMAIL_FROM")
+	cfg.Email.AdminPanelURL = os.Getenv("ADMIN_PANEL_URL")
+	if cfg.Email.AdminPanelURL == "" {
+		cfg.Email.AdminPanelURL = "https://russia-heroes.ru/adm"
+	}
 
 	cfg.Telegram.BotToken = os.Getenv("TG_BOT_TOKEN")
-	cfg.Telegram.WebhookURL = os.Getenv("TG_WEBHOOK_URL")
+	cfg.Telegram.AdminChatID = os.Getenv("TG_ADMIN_CHAT_ID")
 
 	cfg.Storage.MinioEndpoint = os.Getenv("MINIO_ENDPOINT")
 	cfg.Storage.MinioUsername = os.Getenv("MINIO_ROOT_USER")
