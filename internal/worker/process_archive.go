@@ -100,7 +100,7 @@ func (w *Worker) ProcessArchiveTask(ctx context.Context, t *asynq.Task) error {
 		return fmt.Errorf("ошибка при создании скриншота: %w", err)
 	}
 
-	siteUrl := fmt.Sprintf("https://%s/preview/%s/index.html", w.cfg.Storage.SitePublicUrl, siteSlug)
+	siteUrl := fmt.Sprintf("http://%s/preview/%s/index.html", w.cfg.Storage.SitePublicUrl, siteSlug)
 	log.Printf("[worker] requestId=%d: готово, siteUrl=%s screenshotUrl=%s", payload.RequestId, siteUrl, screenshotUrl)
 
 	// Используем свежий контекст — asynq-контекст к этому моменту может быть отменён
